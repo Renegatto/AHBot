@@ -1,67 +1,50 @@
 module Startup where
-import qualified Constants as Const (token,bot_prefix,guildId,chatchannelId)
 import qualified Bot
-import qualified Parsers as Parsers
+import qualified Constants                     as Const (bot_prefix,
+                                                         chatchannelId, guildId,
+                                                         token)
+import qualified Parsers
 
-import Discord
-import Discord.Handle
-import Discord.Internal.Gateway 
-import Discord.Internal.Rest
-import Discord.Internal.Types.Events
-
+import           Discord
+import           Discord.Internal.Rest
 import qualified Discord.Internal.Rest.Channel as RChann
-import qualified Discord.Internal.Rest.Prelude as Req
 
-import Control.Monad(void)
-import Control.Monad.Reader(ReaderT(..),mapReaderT)
-import qualified Data.Text as T
-
-
-
-data BotCommand = DoNothing | PlsMeme 
-
-runCommand :: DiscordHandle -> Message -> BotCommand -> IO ()
-runCommand _ _ DoNothing = pure ()
-runCommand handle msg PlsMeme = do
-    --mimage <- getCompose $ Bot.randomImage
-    run $ restCall 
-        $ RChann.CreateMessage (messageChannel msg) (T.pack "got it :thumbsup:")
-    return ()
-    where run = flip runReaderT handle
+import           Control.Concurrent.Chan       (getChanContents)
+import           Control.Monad                 (void)
+import           Control.Monad.Reader          (ReaderT (..), mapReaderT)
+import qualified Data.Text                     as T
 
 startWholeShit :: IO String
-startWholeShit = 
-    fmap T.unpack 
-    $ runDiscord 
-    $ runOptions handleStart handleEvent
+startWholeShit =
+    fmap T.unpack
+    $ runDiscord
+    $ runningOptions handleStart handleEvent
 
 handleStart :: ReaderT DiscordHandle IO ()
 handleStart =
     mapReaderT void
-    $ restCall 
-    $ RChann.CreateMessage chatchannelId (T.pack "i'm started!")
+    $ restCall
+    $ RChann.CreateMessage Const.chatchannelId (T.pack "i'm started!")
 
 handleEvent :: Event -> DiscordHandler ()
 handleEvent event = ReaderT handler
-    where 
-    handler handle =
+    where
+      handler handle =
         case event of
             MessageCreate msg ->
-                runCommand handle msg
+                Bot.runCommand handle msg
                 $ Parsers.parseCommand
                 $ messageText msg
             _ -> pure ()
 
-runOptions :: 
-    DiscordHandler () ->
-    (Event -> DiscordHandler ()) ->
-    RunDiscordOpts
-runOptions on_start event_handler = RunDiscordOpts 
+runningOptions :: DiscordHandler () -> (Event -> DiscordHandler ()) -> RunDiscordOpts
+runningOptions on_start event_handler = RunDiscordOpts
     {
-        discordToken = token,
-        discordOnStart = on_start,
-        discordOnEnd = print ">discord shutting down",
-        discordOnEvent = event_handler,
-        discordOnLog = print . ("loging: " <>) . T.unpack,
+        discordToken    = Const.token,
+        discordOnStart  = on_start,
+        discordOnEnd    = print ">discord shutting down",
+        discordOnEvent  = event_handler,
+        discordOnLog    = print . ("loging: " <>) . T.unpack,
         discordForkThreadForEvents = True
     }
+

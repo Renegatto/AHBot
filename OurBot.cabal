@@ -33,6 +33,10 @@ library
       Startup
       Parsers
       Constants
+      Resources
+      Types.Common
+      ArtHistory.Types
+      ArtHistory.Events
   other-modules:
       Paths_OurBot
   hs-source-dirs:
@@ -43,7 +47,9 @@ library
       discord-haskell  ,
       random           ,
       mtl              ,
-      text
+      containers       ,
+      text             ,
+      parsec
   default-language: Haskell2010
 
 executable myproj-exe

@@ -1,80 +1,36 @@
-{-# LANGUAGE FlexibleInstances #-}
-module Bot (randomElem,randomImage) where
-import Data.Maybe (fromMaybe)
---import Control.Monad.Trans.Maybe
-import Data.Functor.Compose
-import Data.Functor(($>))
-import Discord
-import System.Random (randomRIO)
-import Control.Monad(mzero,mplus,MonadPlus(..),join)
-import Control.Applicative(Alternative(..))
-import Data.Functor.Contravariant
-data URI = URI String
-data Image = Image URI
-newtype SnowflakeID = SnowflakeID Integer
+module Bot(BotCommand(..),runCommand) where
+import           Data.Functor.Compose
+import qualified Data.Text                     as T
+import           Control.Monad.Reader          (ReaderT (..), mapReaderT)
 
-data MessageContent =
-  MsgText String
-  |MsgImage Image
-  |MsgMention SnowflakeID
-  |MsgSequence [MessageContent]
-
-data DiscordTarget =
-  User SnowflakeID
-  |Guild SnowflakeID
+import           Discord
+import           Discord.Internal.Rest
+import qualified Discord.Internal.Rest.Channel as RChann
+import           Types.Common
+import           Resources (randomImage)
 
 data BotCommand =
-  SendMeme DiscordTarget
-  |DoFlip
-
-data DiscordCommand =
-  SendMessage DiscordTarget MessageContent
-  |DeleteLastMessage DiscordTarget
+  PlsMeme
   |DoNothing
 
-type IOMaybe = Compose IO Maybe
-
-randomImage :: IOMaybe Image
-randomImage = Compose $ sequenceA =<< randomElem <$> images
-
-memeCommand :: BotCommand -> IOMaybe DiscordCommand
-memeCommand (SendMeme target) =
-  SendMessage target . MsgImage <$> randomImage
-memeCommand _ = mzero
-
-doFlipCommand :: BotCommand -> IOMaybe DiscordCommand
-doFlipCommand DoFlip = pure  DoNothing
-doFlipCommand _      = mzero
-
-processBotCommand :: BotCommand -> IO DiscordCommand
-processBotCommand =
-  unpack . foldl mplus mzero 
-  . flip map [doFlipCommand,memeCommand] . flip ($)
-  where 
-  unpack x = fromMaybe DoNothing <$> getCompose x
-
-processDiscordCommand :: DiscordCommand -> IO ()
-processDiscordCommand cmd = 
-  case cmd of
-    SendMessage target content  -> sendMessage target content
-    DeleteLastMessage target    -> deleteLastMessage target
+runCommand :: DiscordHandle -> Message -> BotCommand -> IO ()
+runCommand _ _        DoNothing = pure ()
+runCommand handle msg PlsMeme = do
+    --mimage <- getCompose $ Bot.randomImage
+    run $ restCall
+        $ RChann.CreateMessage (messageChannel msg) (T.pack "got it :thumbsup:")
+    return ()
+    where run = flip runReaderT handle
 
 -- ENVIRONMENT
 
-images :: IO [Image]
-images = undefined
-
-sendMessage :: DiscordTarget -> MessageContent -> IO ()
-sendMessage = undefined
-
-deleteLastMessage :: DiscordTarget -> IO ()
-deleteLastMessage = undefined
-
-randomElem :: [a] -> Maybe (IO a)
-randomElem [] = Nothing
-randomElem xs = 
-  Just $ (xs !!) <$> randomRIO (0,length xs - 1)
-
+{-
+{-# LANGUAGE FlexibleInstances #-}
+import Data.Maybe (fromMaybe)
+--import Data.Functor(($>))
+import Control.Monad(mzero,mplus,MonadPlus(..),join)
+import Control.Applicative(Alternative(..))
+import Data.Functor.Contravariant
 
 instance Monad IOMaybe where
   return x = Compose $ pure $ Just x
@@ -82,4 +38,4 @@ instance Monad IOMaybe where
       $ (fromMaybe (pure mzero) 
       . fmap (getCompose . f)) =<< x
 instance MonadPlus IOMaybe where
-  mzero = Compose $ pure Nothing
+  mzero = Compose $ pure Nothing-}
