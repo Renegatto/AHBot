@@ -38,6 +38,7 @@ library
       ArtHistory.Types
       ArtHistory.Events
       ArtHistory.Domain
+      ArtHistory.Commands
   other-modules:
       Paths_OurBot
   hs-source-dirs:

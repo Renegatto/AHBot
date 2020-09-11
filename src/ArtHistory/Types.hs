@@ -1,5 +1,5 @@
 module ArtHistory.Types where
-import Types.Common(Image)
+import Types.Common(Image,Message)
 
 data Art = Art String deriving (Eq,Show)
 data Artwork = Artwork 
@@ -32,10 +32,12 @@ data Event =
     NewQuizSeriesStarted QuizConfig
     |QuizSended Quiz
     |QuizSolved SolvedQuiz
-    |TestEnded QuizStats  
+    |QuizSeriesEnded QuizStats
+    |MessageSent Message
     deriving (Eq,Show)
 data Command =
     NewQuizSeries QuizConfig
     |NextQuiz QuizConfig
     |SolveQuiz Quiz Variant
-    |EndQuiz
+    |EndQuizSeries
+    |SendMessage Message

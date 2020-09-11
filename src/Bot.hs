@@ -6,7 +6,7 @@ import           Control.Monad.Reader          (ReaderT (..), mapReaderT)
 import           Discord
 import           Discord.Internal.Rest
 import qualified Discord.Internal.Rest.Channel as RChann
-import           Types.Common
+import           Types.Common hiding (Message(..))
 import           Resources (randomImage)
 
 data BotCommand =
