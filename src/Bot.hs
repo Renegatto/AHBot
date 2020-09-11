@@ -24,18 +24,3 @@ runCommand handle msg PlsMeme = do
 
 -- ENVIRONMENT
 
-{-
-{-# LANGUAGE FlexibleInstances #-}
-import Data.Maybe (fromMaybe)
---import Data.Functor(($>))
-import Control.Monad(mzero,mplus,MonadPlus(..),join)
-import Control.Applicative(Alternative(..))
-import Data.Functor.Contravariant
-
-instance Monad IOMaybe where
-  return x = Compose $ pure $ Just x
-  (Compose x) >>= f = Compose 
-      $ (fromMaybe (pure mzero) 
-      . fmap (getCompose . f)) =<< x
-instance MonadPlus IOMaybe where
-  mzero = Compose $ pure Nothing-}

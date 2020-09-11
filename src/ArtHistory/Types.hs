@@ -1,34 +1,39 @@
 module ArtHistory.Types where
-data Art = Art String
+import Types.Common(Image)
+
+data Art = Art String deriving (Eq,Show)
 data Artwork = Artwork 
     {
         artworkAuthor  :: String,
         artworkYear    :: String,
-        artworkName    :: String
-    }
-data Variant = Variant {variantNumber::Int, variantArtwork::Artwork}
-data Quiz = Quiz Variant [Variant]
+        artworkName    :: String,
+        artworkImage   :: Image
+    } deriving (Eq,Show)
+data Variant = Variant {variantNumber::Int, variantArtwork::Artwork} deriving (Eq,Show)
+data Quiz = Quiz Variant [Variant] deriving (Eq,Show)
 data QuizConfig = QuizConfig 
     { cfgTotalVariants  :: Int
     , cfgArt            :: Art
-    , cfgTotalQuizes    :: Int
-    }
+    , cfgTotalQuizes    :: Int  
+    } deriving (Eq,Show)
 data QuizStats = QuizStats
     { statsPassed   :: Int
     , statsConfig   :: QuizConfig
     , statsSolveds  :: [SolvedQuiz]
-    }
+    } deriving (Eq,Show)
 data SolvedQuiz = 
     Succesful Variant Quiz
     |Failed   Variant Quiz
- 
-
+    deriving (Eq,Show)
+data QuizSeriesData = QuizSeriesData Variant
+    
 
 data Event =
     NewQuizSeriesStarted QuizConfig
     |QuizSended Quiz
     |QuizSolved SolvedQuiz
-    |TestEnded QuizStats
+    |TestEnded QuizStats  
+    deriving (Eq,Show)
 data Command =
     NewQuizSeries QuizConfig
     |NextQuiz QuizConfig
