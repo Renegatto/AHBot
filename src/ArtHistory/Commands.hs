@@ -19,45 +19,31 @@ import Discord.Internal.Rest.Channel as RChan
 import Control.Monad.Reader(ReaderT(..))
 import qualified Data.Text as T
 
-type CommandHandler a = Subscription -> a -> DiscordHandler [Event]
+type CommandProcessor a = a -> IO [Event]
+type CommandHandler = Command -> IO [Event]
 
-hole = undefined
-
-eventAction :: Subscription -> Event -> DiscordHandler ()
-eventAction (Subscription _ channel) =
-    void . restCall
-    . RChan.CreateMessage channel
-    . T.pack . show . MessageContent
-
-nextQuiz :: CommandHandler QuizConfig
-nextQuiz subscription cfg =
-    handleEvents (eventAction subscription) 
-    <=< ReaderT . const
-    . toIO . fmap (Domain.nextQuiz cfg ) 
+nextQuiz :: CommandProcessor QuizConfig
+nextQuiz cfg =
+    toIO . fmap (Domain.nextQuiz cfg ) 
     $ withRandomQuizSet cfg
 
-newQuizSeries :: CommandHandler QuizConfig
-newQuizSeries subscription cfg =
-    handleEvents (eventAction subscription) 
-    <=< ReaderT . const
-    . toIO . fmap (Domain.newQuizSeries cfg )
+newQuizSeries :: CommandProcessor QuizConfig
+newQuizSeries cfg =
+    toIO . fmap (Domain.newQuizSeries cfg )
     $ withRandomQuizSet cfg
 
-solveQuiz :: CommandHandler (Variant,Quiz)
-solveQuiz subscription =
-    handleEvents (eventAction subscription)
-    . uncurry Domain.solveQuiz
+solveQuiz :: CommandProcessor (Variant,Quiz)
+solveQuiz = pure . uncurry Domain.solveQuiz
 
-endQuiz :: CommandHandler ()
-endQuiz subscription = hole
-    -- handleEvents (eventAction discord_channel)
-    -- . Domain.endQuiz
-    -- <$> 
-cmd dc (NextQuiz cfg)      = nextQuiz dc cfg
-cmd dc (NewQuizSeries cfg) = newQuizSeries dc cfg
+endQuiz :: CommandProcessor ()
+endQuiz = undefined
+ 
+handle :: CommandHandler
+handle (NextQuiz cfg) = nextQuiz cfg
+handle (NewQuizSeries cfg) = newQuizSeries cfg
 
-handleEvents :: (Event -> DiscordHandler ()) -> [Event] -> DiscordHandler [Event]
-handleEvents action = ($>) =<< mapM_ action
+--handleEvents :: (Event -> DiscordHandler ()) -> [Event] -> DiscordHandler [Event]
+--handleEvents action = ($>) =<< mapM_ action
 
 withRandomQuizSet :: QuizConfig -> Compose IO Maybe (Artwork,[Artwork])
 withRandomQuizSet = Res.randomQuizSet . cfgTotalVariants

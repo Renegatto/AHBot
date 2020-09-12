@@ -18,5 +18,6 @@ nextQuiz cfg (art,arts) =
 
 solveQuiz :: Variant -> Quiz -> [Event]
 solveQuiz answer quiz@(Quiz right _)
-    |answer == right = [QuizSolved $ Succesful answer quiz]
+    |answer == right = 
+        [QuizSolved $ Succesful answer quiz]
     |otherwise       = [QuizSolved $ Failed    answer quiz]

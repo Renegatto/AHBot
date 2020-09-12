@@ -1,6 +1,5 @@
 module Main where
 import qualified Conc
-import Bot
 import qualified Startup as St
 
 main :: IO ()

@@ -25,9 +25,6 @@ data SolvedQuiz =
     Succesful Variant Quiz
     |Failed   Variant Quiz
     deriving (Eq,Show)
-data QuizSeriesData = QuizSeriesData Variant
-    
-
 data Event =
     NewQuizSeriesStarted QuizConfig
     |QuizSended Quiz
