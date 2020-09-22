@@ -16,8 +16,11 @@ nextQuiz cfg (art,arts) =
     try_quiz            = flip Quiz variants <$> try_right_variant
     try_right_variant   = find ((art ==) . variantArtwork) variants
 
-solveQuiz :: Variant -> Quiz -> [Event]
+solveQuiz :: Variant -> [Event] -> [Event]
 solveQuiz answer quiz@(Quiz right _)
     |answer == right = 
         [QuizSolved $ Succesful answer quiz]
     |otherwise       = [QuizSolved $ Failed    answer quiz]
+
+trySolve :: Variant -> [Event] -> [Event]
+trySolve = undefined

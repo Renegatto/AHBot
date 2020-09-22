@@ -40,3 +40,5 @@ instance Show (MessageContent Event) where
         <> show (MessageContent cfg) <> "\n"
         <> "You succefly finished " <> show passed <>
         "quizes,\n"
+    show (MessageContent (MessageSent text)) =
+        show text
