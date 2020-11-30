@@ -1,8 +1,11 @@
 module Startup where
 import qualified Bot
-import qualified Constants                     as Const (bot_prefix,
-                                                         chatchannelId, guildId,
-                                                         token)
+import qualified Types.Common as Common (AppData) 
+import qualified ArtHistory.Types as AH
+import qualified Constants                     as Const ( bot_prefix
+                                                        , chatchannelId
+                                                        , guildId
+                                                        , token )
 import qualified Parsers
 
 import           Discord
@@ -17,8 +20,9 @@ import qualified Data.Text                     as T
 startWholeShit :: IO String
 startWholeShit =
     fmap T.unpack
-    $ runDiscord
-    $ runningOptions handleStart handleEvent
+    . runDiscord
+    . runningOptions handleStart . handleEvent 
+    =<< Bot.createEnv
 
 handleStart :: ReaderT DiscordHandle IO ()
 handleStart =
@@ -26,15 +30,16 @@ handleStart =
     $ restCall
     $ RChann.CreateMessage Const.chatchannelId (T.pack "i'm started!")
 
-handleEvent :: Event -> DiscordHandler ()
-handleEvent event = ReaderT handler
+handleEvent :: Common.AppData AH.Event AH.Command -> Event -> DiscordHandler ()
+handleEvent appdata event = ReaderT handler
     where
       handler handle =
         case event of
             MessageCreate msg ->
-                Bot.runCommand handle msg
-                $ Parsers.parseCommand
-                $ messageText msg
+                Bot.artHistoryCommand handle appdata (undefined msg)
+                -- Bot.runCommand handle msg
+                --  $ Parsers.parseCommand
+                --  $ messageText msg
             _ -> pure ()
 
 runningOptions :: DiscordHandler () -> (Event -> DiscordHandler ()) -> RunDiscordOpts

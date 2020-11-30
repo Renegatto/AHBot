@@ -3,6 +3,7 @@ import Discord.Internal.Types (ChannelId,Snowflake)
 import qualified Data.Text as T
 import Control.Concurrent.Chan as Chann
 import Control.Monad.Reader as Re
+import qualified Control.Category as Cat
 newtype Image = Image String deriving (Eq,Show)
 
 newtype Subscriber = Subscriber Snowflake deriving (Eq,Show)

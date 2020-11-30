@@ -24,7 +24,7 @@ handleEvent event' =
     case subscriptionStored event' of
 
     event@( NewQuizSeriesStarted cfg ) -> 
-        pure $ [sendMessage event, NextQuiz cfg] <$ event'
+        pure $ [sendMessage event, NextQuiz] <$ event'
 
     event@( QuizSended quiz )       -> pure $ [sendMessage event] <$ event'
 

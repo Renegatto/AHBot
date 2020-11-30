@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleInstances, GADTs, ScopedTypeVariables, InstanceSigs #-}
+{-# LANGUAGE FlexibleInstances, GADTs, InstanceSigs #-}
 module Resources ( artworks
                  , randomQuizSet
                  , randomImage
