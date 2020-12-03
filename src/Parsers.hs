@@ -20,48 +20,22 @@ import Data.Bifunctor as Bi (first,bimap,second)
 
 -- hole = undefined
 
-parseAHCommand :: Parser T.Text CommandPrefix
-parseAHCommand s = 
-    match Next "next"
-    <|> match New "new"
-    <|> match Try "try"
-    <|> match Done "done"
-    where match = (. flip T.stripPrefix s) . fmap . (,)
 (...) = (.) . (.)
 (....) = (.) . (...) :: (d -> e) -> (a -> b -> c -> d) -> a -> b -> c -> e  
-eof' = '_' <$ eof :: Parsec String s Char
-sarg = spaces *> manyTill anyChar (eof' <|> space) :: Parsec String s String
-arg = read <$> sarg -- :: Read a => Parsec String s a
--- variants:Int (Art name:String) quizes:Int
+eof' = '_' <$ eof
+sarg = spaces *> manyTill anyChar (eof' <|> space)
+arg = read <$> sarg
 
-parseAHArgs' :: Parsec String s Command
-parseAHArgs' =
+parseAHArgs :: Parsec String s Command
+parseAHArgs =
     (    string "new"  >> liftM3 mkNew arg (Art <$> sarg) arg)
     <|> (string "next" $> NextQuiz)
     <|> (string "try"  >> SolveQuiz . Answer <$> arg)
     <|> (string "done" $> EndQuizSeries)
     where mkNew = (NewQuizSeries .) ... QuizConfig
- 
-{-
-parseAHArgs :: CommandPrefix -> Parser T.Text Command 
-parseAHArgs prefix s =
-    case prefix of
-    New  -> new 
-    Next -> Just (NextQuiz,s)
-    Try  -> Bi.bimap SolveQuiz (T.intercalate " ") <$> arg (Answer,args)
-    Done -> Just (EndQuizSeries,s)
-    where 
-    args = T.words s :: [T.Text]
-
-    new = Bi.bimap NewQuizSeries (T.intercalate " ") 
-        <$> cfg :: Maybe (Command,T.Text)
-
-    art = sarg (Art . T.unpack,args) :: Maybe (Art,[T.Text]) 
-    cfg = art >>= arg . Bi.first (flip QuizConfig) >>= arg :: Maybe (QuizConfig,[T.Text])
-
-    sarg = arg' Just :: (T.Text -> c,[T.Text]) -> Maybe (c,[T.Text])
-    arg = arg' (readMaybe . T.unpack) :: Read a => (a -> c,[T.Text]) -> Maybe (c,[T.Text])
--}
+    
+--             |
+-- plsmeme bot V
 
 commands = 
   Map.insert (T.pack "do nothing") DoNothing 
