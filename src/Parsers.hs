@@ -20,11 +20,6 @@ import Data.Bifunctor as Bi (first,bimap,second)
 
 -- hole = undefined
 
-parseArtHistoryCommand :: T.Text -> Maybe Command
-parseArtHistoryCommand t = fmap fst . uncurry parseAHArgs =<< parseAHCommand t
-
-data CommandPrefix = New | Next | Try | Done
-
 parseAHCommand :: Parser T.Text CommandPrefix
 parseAHCommand s = 
     match Next "next"
@@ -46,55 +41,7 @@ parseAHArgs' =
     <|> (string "try"  >> SolveQuiz . Answer <$> arg)
     <|> (string "done" $> EndQuizSeries)
     where mkNew = (NewQuizSeries .) ... QuizConfig
-    
-
-parseAHArgs :: CommandPrefix -> Parser T.Text Command 
-parseAHArgs prefix s =
-    case prefix of
-    New  -> new 
-    Next -> Just (NextQuiz,s)
-    Try  -> finish $ papply (SolveQuiz . Answer) $ pstart readT args
-    Done -> Just (EndQuizSeries,s)
-    where 
-    args = T.words s
-
-    art :: (d,[T.Text]) -> Maybe ((d,Art),[T.Text])
-    art = psecond Art . sarg
-
-    new :: Maybe (Command,T.Text)
-    new = (pstart readT args >>= art >>= arg) 
-        & papply quizConfig 
-        & papply NewQuizSeries 
-        & finish
-
-    finish = fmap (Bi.second $ T.intercalate " ")
-    quizConfig = uncurry . uncurry $ QuizConfig
-    sarg = pzip (Just . T.unpack)
-    arg  = pzip readT
-    readT = readMaybe . T.unpack
-
-type Parser a b = a -> Maybe (b,a) 
-
-arg' :: Read b => (T.Text -> Maybe b) -> (b -> c,[T.Text]) -> Maybe (c,[T.Text])
-arg' g (f,x:xs) = (,xs) . f <$> g x
-arg' g _        = Nothing
-
-pstart :: (b -> Maybe a) -> [b] -> Maybe (a,[b])
-pstart f (x:xs) = (,xs) <$> f x
-pstart _ _ = Nothing
-
-pzip :: Read b => (T.Text -> Maybe b) -> (d,[T.Text]) -> Maybe ((d,b),[T.Text])
-pzip f (a,x:xs) = (,xs) . (a,) <$> f x
-pzip _ _        = Nothing
-
-(&) = flip ($)
-
-papply :: (a -> b) -> Maybe (a,c) -> Maybe (b,c)
-papply = fmap . Bi.first
-psecond :: (b -> c) -> Maybe ((a,b),e) -> Maybe ((a,c),e)
-psecond = fmap . Bi.first . Bi.second
-
-
+ 
 {-
 parseAHArgs :: CommandPrefix -> Parser T.Text Command 
 parseAHArgs prefix s =
@@ -115,7 +62,6 @@ parseAHArgs prefix s =
     sarg = arg' Just :: (T.Text -> c,[T.Text]) -> Maybe (c,[T.Text])
     arg = arg' (readMaybe . T.unpack) :: Read a => (a -> c,[T.Text]) -> Maybe (c,[T.Text])
 -}
-
 
 commands = 
   Map.insert (T.pack "do nothing") DoNothing 
