@@ -9,10 +9,12 @@ module ArtHistory.Languages ( AppL
                             , Result
                             , evalAppL ) where
 
-import Types.Common     (Subscription,AppData)
-import ArtHistory.Types (Event(..),Quiz,QuizConfig,Error,Artwork)
-
+import Types.Common     (Subscription,AppData(..),Sub(..))
+import ArtHistory.Types (Event(..),Quiz,QuizConfig,Error(..),Artwork)
+import Resources (randomQuizSet')
 import Control.Monad.Free
+import Control.Concurrent.Chan (writeList2Chan,getChanContents)
+import qualified ArtHistory.Domain as Domain
 
 type AppL a = Free App a
 data App  a = RandApp (Random a) | EventApp (EventStorage a) deriving Functor
@@ -42,9 +44,34 @@ pushEvents events   = liftF $ EventApp $ PushEvents events id
 
 randomQuizSet n = liftF $ RandApp $ RandomQuizSet n id
 
-evalEventStorage :: Subscription -> EventStorage a -> IO a
-evalEventStorage = hole
-evalAppL :: AppData Event a -> Subscription -> AppL b -> IO b
-evalAppL = hole
+evalRandom :: Random a -> IO a
+evalRandom (RandomQuizSet n cont) = 
+    cont . maybe (Left error) Right 
+    <$> randomQuizSet' n
+    where error = Error "Error: cant generate random quiz set"
 
-hole = undefined
+evalEventStorage :: AppData (Sub Event) a -> Subscription -> EventStorage b -> IO b
+evalEventStorage app sub (SubscriptionEvents cont) = do
+    cont . map subscriptionStored 
+    . filter ((== sub) . subscriptionInfo)
+    <$> getChanContents (eventsHistory app)
+evalEventStorage app sub (UnsolvedQuiz cont) = 
+    fmap cont 
+    $ evalEventStorage app sub 
+    $ SubscriptionEvents Domain.unsolvedQuiz
+evalEventStorage app sub (QuizConfig cont) =
+    fmap cont 
+    $ evalEventStorage app sub 
+    $ SubscriptionEvents Domain.quizConfig    
+evalEventStorage app sub (PushEvents events cont) = do
+    writeList2Chan (eventsHistory app) $ map (Sub sub) events
+    pure (cont $ pure ())
+
+evalApp :: AppData (Sub Event) a -> Subscription -> App b -> IO b
+evalApp app sub (RandApp  x) = evalRandom x
+evalApp app sub (EventApp x) = evalEventStorage app sub x
+
+evalAppL :: AppData (Sub Event) a -> Subscription -> AppL b -> IO b
+evalAppL app sub = foldFree $ evalApp app sub
+
+--hole = undefined

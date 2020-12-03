@@ -3,6 +3,7 @@ module Resources ( artworks
                  , randomQuizSet
                  , randomImage
                  , images
+                 , randomQuizSet'
                  ) where
 import Data.Maybe (fromMaybe)
 --import Data.Functor(($>))
@@ -16,13 +17,8 @@ import Data.Functor.Compose
 import Data.List(sortOn)
 import Data.Monoid
 import Data.Functor.Sum
--- f (g x) x
 
---randomArtwork :: IOMaybe Art.Artwork
---randomArtwork = randomFrom artworks
-
-foo :: (a -> m -> b) -> (m -> a) -> m -> b
-foo = (=<<)
+--hole = undefined
 
 randomArtworks :: Int -> IOMaybe [Art.Artwork]
 randomArtworks n = Compose $ sequence . randomSample n =<< artworks
@@ -31,8 +27,11 @@ randomQuizSet :: Int -> IOMaybe (Art.Artwork,[Art.Artwork])
 randomQuizSet n = 
   (flip (fmap . flip (,)) =<< randomElem') =<< randomArtworks n
 
+randomQuizSet' :: Int -> IO (Maybe (Art.Artwork,[Art.Artwork]))
+randomQuizSet' n = getCompose $ randomQuizSet n
+
 artworks :: IO [Art.Artwork]
-artworks = undefined
+artworks = hole
 
 -- =============
 
@@ -40,7 +39,7 @@ randomImage :: IOMaybe Image
 randomImage = randomFrom images
 
 images :: IO [Image]
-images = undefined
+images = hole
 
 -- =============
 

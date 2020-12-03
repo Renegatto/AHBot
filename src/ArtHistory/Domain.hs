@@ -3,7 +3,7 @@ import           ArtHistory.Types
 import           Control.Arrow
 import           Data.Maybe (maybeToList)
 import           Data.List(find)
-
+--hole' = undefined
 newQuizSeries :: QuizConfig -> [Event]
 newQuizSeries cfg =
     [NewQuizSeriesStarted cfg]
@@ -20,14 +20,15 @@ solveQuiz :: Variant -> Quiz -> [Event]
 solveQuiz answer quiz@(Quiz right _)
     |answer == right = 
         [QuizSolved $ Succesful answer quiz]
-    |otherwise       = [QuizSolved $ Failed    answer quiz]
-trySolve :: Variant -> Quiz -> [Event]
-trySolve = undefined
+    |otherwise = 
+        [QuizSolved $ Failed    answer quiz]
+trySolve :: Answer -> Quiz -> [Event]
+trySolve = hole'
 
 
 
 unsolvedQuiz :: [Event] -> Either Error Quiz
-unsolvedQuiz = undefined
+unsolvedQuiz = hole'
 
 quizConfig :: [Event] -> Either Error QuizConfig
-quizConfig = undefined
+quizConfig = hole'

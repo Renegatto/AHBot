@@ -21,12 +21,12 @@ data BotCommand =
   PlsMeme
   |DoNothing
 
-hole = undefined
+-- hole = undefined
 
-createEnv :: IO (AppData AH.Event AH.Command)
+createEnv :: IO (AppData (Sub AH.Event) (Sub AH.Command))
 createEnv = liftM3 AppData newChan newChan newChan
 
-artHistoryCommand :: DiscordHandle -> AppData AH.Event AH.Command -> AH.Command -> IO ()
+artHistoryCommand :: DiscordHandle -> AppData (Sub AH.Event) (Sub AH.Command) -> AH.Command -> IO ()
 artHistoryCommand handle appdata command = 
   () <$ AHLangs.evalAppL appdata (hole :: Subscription) (fromRight () <$> AHCommands.handle command)
 

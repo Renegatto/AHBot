@@ -48,7 +48,7 @@ handleEvent event' =
 -- interpreting events, performing actions and generating new commands
 @-}
 
-hole = undefined
+--hole = undefined
 
 sendMessage :: Event -> Command
 sendMessage = SendMessage . Message . T.pack . show . MessageContent

@@ -13,6 +13,8 @@ data Artwork = Artwork
         artworkImage   :: Common.Image
     } deriving (Eq,Show)
 data Variant = Variant {variantNumber::Int, variantArtwork::Artwork} deriving (Eq,Show)
+newtype Answer = Answer {answerVariant :: Int} deriving (Eq,Show)
+
 data Quiz = Quiz Variant [Variant] deriving (Eq,Show)
 data QuizConfig = QuizConfig 
     { cfgTotalVariants  :: Int
@@ -38,7 +40,7 @@ data Event =
 data Command =
     NewQuizSeries QuizConfig
     |NextQuiz
-    |SolveQuiz Variant
+    |SolveQuiz Answer
     |EndQuizSeries
     |SendMessage Common.Message
 
@@ -59,7 +61,7 @@ readContext' f =
 
 runContext :: (Monad m) => AppContext m a b -> (App,Common.Sub a) -> m (Common.Sub (Result b))
 runContext (AppContext r) = runReaderT r
-
+{-
 instance (Monad m) => Functor (AppContext m a) where
     --fmap :: forall a m b e. (a -> b) -> AC e m a -> AC e m b
     fmap f (AppContext context) = 
@@ -130,7 +132,7 @@ instance (Monad m) => Arr.Arrow (AppContext m) where
         foo ctx' input@(_,Common.Sub _ (a,d)) =
             fmap (fmap (,d)) <$> ctx' ((a <$) <$> input)
 instance (Monad m) => Arr.ArrowApply (AppContext m) where
-    app = undefined
+    app = 3--hole
 --arr :: (Arr.Arrow a) => (b -> c) -> a b c
 rev x f = f x
 --arr x = Arr.arr x
@@ -141,3 +143,5 @@ gcurry =  rev (Arr.arr (Arr.arr . (,))) . (Arr.<<<) . Arr.arr . (Arr.<<<)
 
 guncurry ::  forall a b c d. (Arr.Arrow a, Arr.ArrowApply a) => a b (a c d) -> a (b,c) d
 guncurry = (Arr.app Arr.<<<) . Arr.first
+-- hole = undefined
+-}

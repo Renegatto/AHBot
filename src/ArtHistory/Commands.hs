@@ -10,7 +10,7 @@ import ArtHistory.Languages
 jtraverse :: (Traversable t, Monad t, Monad f) => (a -> f (t b)) -> t a -> f (t b)
 jtraverse = fmap join ... traverse
 
-hole = undefined
+-- hole = undefined
 
 type ArtworkSet = (Artwork,[Artwork])
 
@@ -23,11 +23,11 @@ nextQuiz = do
 newQuizSeries :: QuizConfig -> AppL (Result ())
 newQuizSeries = pushEvents . Domain.newQuizSeries
 
-solveQuiz :: Variant -> AppL (Result ())
-solveQuiz variant = jtraverse pushEvents . fmap (Domain.trySolve variant) =<< unsolvedQuiz
+solveQuiz :: Answer -> AppL (Result ())
+solveQuiz answer = jtraverse pushEvents . fmap (Domain.trySolve answer) =<< unsolvedQuiz
 
 endQuizSeries :: AppL (Result ())
-endQuizSeries = hole
+endQuizSeries = 6 -- endQuizSeries
 
 type CommandHandler = AppContext IO Command [Event]
 
@@ -36,7 +36,7 @@ handle event =
     case event of
         NextQuiz -> nextQuiz
         NewQuizSeries cfg -> newQuizSeries cfg
-        SolveQuiz variant -> solveQuiz variant
+        SolveQuiz answer -> solveQuiz answer
         EndQuizSeries -> endQuizSeries
         SendMessage msg -> pushEvents [MessageSent msg]
     

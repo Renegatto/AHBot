@@ -30,13 +30,13 @@ handleStart =
     $ restCall
     $ RChann.CreateMessage Const.chatchannelId (T.pack "i'm started!")
 
-handleEvent :: Common.AppData AH.Event AH.Command -> Event -> DiscordHandler ()
+-- handleEvent :: Common.AppData (Sub AH.Event) (Sub AH.Command) -> Event -> DiscordHandler ()
 handleEvent appdata event = ReaderT handler
     where
       handler handle =
         case event of
             MessageCreate msg ->
-                Bot.artHistoryCommand handle appdata (undefined msg)
+                Bot.artHistoryCommand handle appdata (Parsers.parseArtHistoryCommand msg)
                 -- Bot.runCommand handle msg
                 --  $ Parsers.parseCommand
                 --  $ messageText msg
