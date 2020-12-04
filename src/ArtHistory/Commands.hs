@@ -24,10 +24,10 @@ newQuizSeries :: QuizConfig -> AppL (Result ())
 newQuizSeries = pushEvents . Domain.newQuizSeries
 
 solveQuiz :: Answer -> AppL (Result ())
-solveQuiz answer = jtraverse pushEvents . fmap (Domain.trySolve answer) =<< unsolvedQuiz
+solveQuiz answer = jtraverse pushEvents . fmap (Domain.solveQuiz answer) =<< unsolvedQuiz
 
 endQuizSeries :: AppL (Result ())
-endQuizSeries = 6 -- endQuizSeries
+endQuizSeries = pushEvents =<< Domain.endQuizSeries <$> subscriptionEvents
 
 type CommandHandler = AppContext IO Command [Event]
 

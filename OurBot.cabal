@@ -53,7 +53,8 @@ library
       containers       ,
       text             ,
       parsec           ,
-      free
+      free             ,
+      lens
   default-language: Haskell2010        
   default-extensions: ScopedTypeVariables
 executable myproj-exe

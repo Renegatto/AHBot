@@ -2,7 +2,7 @@ module Bot(BotCommand(..),runCommand,createEnv,artHistoryCommand) where
 import           Data.Functor.Compose
 import qualified Data.Text                     as T
 import           Control.Monad.Reader          (ReaderT (..), mapReaderT)
-import           Control.Monad                 (liftM3)
+import           Control.Monad                 (liftM3,void)
 import Data.Either (fromRight)
 
 import           Discord
@@ -28,7 +28,7 @@ createEnv = liftM3 AppData newChan newChan newChan
 
 artHistoryCommand :: DiscordHandle -> AppData (Sub AH.Event) (Sub AH.Command) -> AH.Command -> IO ()
 artHistoryCommand handle appdata command = 
-  () <$ AHLangs.evalAppL appdata (hole :: Subscription) (fromRight () <$> AHCommands.handle command)
+  void $ AHLangs.evalAppL appdata (hole :: Subscription) (fromRight () <$> AHCommands.handle command)
 
 runCommand :: DiscordHandle -> Message -> BotCommand -> IO ()
 runCommand _ _        DoNothing = pure ()

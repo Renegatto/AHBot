@@ -1,5 +1,6 @@
-{-# LANGUAGE TupleSections #-} --InstanceSigs,
+{-# LANGUAGE TupleSections, TemplateHaskell #-} --InstanceSigs,
 module ArtHistory.Types where
+import Control.Lens
 import qualified Types.Common as Common (Image,Message,AppData(..),Sub(..))
 import Control.Monad.Reader as Re
 import qualified Control.Category as Cat
@@ -28,7 +29,7 @@ data QuizStats = QuizStats
     } deriving (Eq,Show)
 data SolvedQuiz = 
     Succesful Variant Quiz
-    |Failed   Variant Quiz
+    |Failed   (Either Answer Variant) Quiz
     deriving (Eq,Show)
 data Event =
     NewQuizSeriesStarted QuizConfig
@@ -37,6 +38,7 @@ data Event =
     |QuizSeriesEnded QuizStats
     |MessageSent Common.Message
     deriving (Eq,Show)
+makeLenses ''Event
 data Command =
     NewQuizSeries QuizConfig
     |NextQuiz
