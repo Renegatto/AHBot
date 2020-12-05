@@ -1,4 +1,4 @@
-{-# LANGUAGE TupleSections, TemplateHaskell #-} --InstanceSigs,
+{-# LANGUAGE TupleSections #-} --InstanceSigs,
 module ArtHistory.Types where
 import Control.Lens
 import qualified Types.Common as Common (Image,Message,AppData(..),Sub(..))
@@ -31,22 +31,23 @@ data SolvedQuiz =
     Succesful Variant Quiz
     |Failed   (Either Answer Variant) Quiz
     deriving (Eq,Show)
+
 data Event =
     NewQuizSeriesStarted QuizConfig
     |QuizSended Quiz
     |QuizSolved SolvedQuiz
     |QuizSeriesEnded QuizStats
     |MessageSent Common.Message
+    |DomainError Error
     deriving (Eq,Show)
-makeLenses ''Event
 data Command =
     NewQuizSeries QuizConfig
     |NextQuiz
     |SolveQuiz Answer
     |EndQuizSeries
     |SendMessage Common.Message
+newtype Error = Error String deriving (Eq,Show)
 
-newtype Error = Error String
 type Result a = Either Error a
 
 type App = Common.AppData (Common.Sub Event) (Common.Sub Command)

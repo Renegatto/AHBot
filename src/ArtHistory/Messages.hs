@@ -6,6 +6,8 @@ newtype MessageContent a = MessageContent a
 instance Show (MessageContent Variant) where
     show (MessageContent (Variant n (Artwork author _ name _))) =
         show n <> ". " <> author <> " " <> name
+instance Show (MessageContent Answer) where
+    show (MessageContent (Answer n )) = show n
 instance Show (MessageContent QuizConfig) where
     show (MessageContent (QuizConfig 
         variants art quizes )) =
@@ -29,7 +31,8 @@ instance Show (MessageContent Event) where
         <> show quizes      <> " quizes, with " 
         <> show variants    <> " variants per quiz."
     show (MessageContent (QuizSolved (Failed answer (Quiz right _)))) =
-        "Failed. You answered " <> show (MessageContent answer)
+        "Failed. You answered " 
+        <> show (either (show . MessageContent) (show . MessageContent) answer)
         <> "but it were" <> show right
     show (MessageContent (QuizSolved (Succesful answer _))) =
         "Right! It is really " <> show answer
@@ -42,3 +45,4 @@ instance Show (MessageContent Event) where
         "quizes,\n"
     show (MessageContent (MessageSent text)) =
         show text
+    show (MessageContent (DomainError (Error e))) = e 

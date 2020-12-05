@@ -1,11 +1,12 @@
 {-# LANGUAGE LambdaCase #-}
 module ArtHistory.Domain where
-
+import Data.Bifunctor (first)
 import           ArtHistory.Types
-
-import           Data.Maybe (maybeToList,listToMaybe,isJust,isNothing)
+import Control.Monad ((<=<),liftM)
+import           Data.Maybe (maybeToList,listToMaybe,isJust,isNothing,mapMaybe)
 import           Data.List(find,break)
-hole' = 3
+hole = 3 :: Int
+(...) = (.) . (.)
 newQuizSeries :: QuizConfig -> [Event]
 newQuizSeries cfg =
     [NewQuizSeriesStarted cfg]
@@ -29,31 +30,51 @@ solveQuiz ans@(Answer answer) quiz@(Quiz right variants)
 
 -- we need some prisms here
 unsolvedQuiz :: [Event] -> Either Error Quiz
-unsolvedQuiz events = ended after >> solved after >> sended
+unsolvedQuiz events = notEnded after >> solved after >> sended before
     where
     (after,before) = break (isNothing . _quizSended) events
-    sended = maybe (Left $ Error "No quizes has been sent") Right 
-                   (_quizSended =<< listToMaybe before)
-    ended  = check (Error "Quiz series already ended") (isJust . _quizSeriesEnded)
-    solved = check (Error "Quiz is already solved")    (isJust . _quizSolved     ) 
+    sended = tryUnpackHead _quizSended (Error "No quizes has been sent")
+    notEnded  = notHappened (Error "Quiz series already ended") (isJust . _quizSeriesEnded)
+    solved = notHappened (Error "Quiz is already solved")    (isJust . _quizSolved     ) 
 
     unpack (QuizSended quiz) = Just quiz
     unpack _                 = Nothing
 
 endQuizSeries :: [Event] -> [Event]
-endQuizSeries = 8
+endQuizSeries = (:[]) . either DomainError QuizSeriesEnded . quizStats
 
-quizConfig :: [Event] -> Either Error QuizConfig
-quizConfig events = ended after >> started
+quizStats :: [Event] -> Either Error QuizStats
+quizStats events = 
+    started after >> notEnded after 
+    >> (fmap $ calcQuizStats $ results after) (started before)
     where
     (after,before) = break (isNothing . _newQuizSeriesStarted) events
-    started = maybe (Left $ Error "No quizes has been started") Right 
-                    (_newQuizSeriesStarted =<< listToMaybe before)
-    ended = check (Error "Quiz series already ended") (isJust . _quizSeriesEnded)
+    results = mapMaybe _quizSolved
+    started = tryUnpackHead _newQuizSeriesStarted (Error "No quizes has been started")
+    notEnded = notHappened (Error "Quiz series already ended") (isJust . _quizSeriesEnded)
 
+calcQuizStats :: [SolvedQuiz] -> QuizConfig -> QuizStats
+calcQuizStats results cfg = QuizStats { statsPassed  = length results
+                                      , statsConfig  = cfg
+                                      , statsSolveds = results}
 
-check :: e -> (a -> Bool) -> [a] -> Either e ()
-check err pred = maybe (Right ()) (const $ Left err) . find pred
+quizConfig :: [Event] -> Either Error QuizConfig
+quizConfig events = notEnded after >> started before
+    where
+    (after,before) = break (isNothing . _newQuizSeriesStarted) events
+    started = tryUnpackHead _newQuizSeriesStarted (Error "No quizes has been started")
+    notEnded = notHappened (Error "Quiz series already ended") (isJust . _quizSeriesEnded)
+
+tryUnpackHead w e = maybe (Left e) Right . (w <=< listToMaybe)
+
+notE :: Either a e -> Either e a
+notE = either Right Left
+
+notHappened :: e -> (a -> Bool) -> [a] -> Either e ()
+notHappened e = maybe (Right ()) (const $ Left e) ... find
+
+happened :: e -> (a -> Bool) -> [a] -> Either e a
+happened e = maybe (Left e) Right ... find
 
 _newQuizSeriesStarted :: Event -> Maybe QuizConfig
 _newQuizSeriesStarted = \case NewQuizSeriesStarted x -> Just x; _ -> Nothing

@@ -27,7 +27,7 @@ solveQuiz :: Answer -> AppL (Result ())
 solveQuiz answer = jtraverse pushEvents . fmap (Domain.solveQuiz answer) =<< unsolvedQuiz
 
 endQuizSeries :: AppL (Result ())
-endQuizSeries = pushEvents =<< Domain.endQuizSeries <$> subscriptionEvents
+endQuizSeries = pushEvents . Domain.endQuizSeries =<< subscriptionEvents
 
 type CommandHandler = AppContext IO Command [Event]
 
