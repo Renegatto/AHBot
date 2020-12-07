@@ -41,8 +41,9 @@ library
       ArtHistory.Domain
       ArtHistory.Commands
       ArtHistory.Messages
-      ArtHistory.Languages
       ArtHistory.Bot
+      ArtHistory.Languages.Interpreters
+      ArtHistory.Languages.Definitions
   other-modules:
       Paths_AHBot
   hs-source-dirs:

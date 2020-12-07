@@ -6,7 +6,7 @@ import              Tools.Combinators               (jtraverse,(...))
 import qualified    ArtHistory.Domain   as    Domain
 import              Types.Common        hiding      (Error(..))
 import              ArtHistory.Types    hiding      (Result)
-import              ArtHistory.Languages
+import              ArtHistory.Languages.Language
 
 type ArtworkSet = (Artwork,[Artwork])
 
