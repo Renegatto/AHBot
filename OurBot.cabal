@@ -35,6 +35,7 @@ library
       Resources
       Schemes
       Types.Common
+      Tools.Combinators
       ArtHistory.Types
       ArtHistory.Events
       ArtHistory.Domain

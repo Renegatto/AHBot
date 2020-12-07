@@ -62,14 +62,7 @@ evalRandom (RandomQuizSet n cont) =
     where error = Error "Error: cant generate random quiz set"
 
 showBefore x = print x >> pure x
-{-
-    MessageSent (Message text) ->
-        (zero <$) $ restCall
-        $ RChan.CreateMessage 
-            (subscriptionChannel $ subscriptionInfo event')
-            text
-        where zero = [] <$ event' 
--}
+
 evalDiscordApp :: DiscordApp a -> DiscordHandler a
 evalDiscordApp (SendMessage (Message msg (Subscription sub chann)) cont) = 
         cont . either (Left . Error . show) (const $ Right ())

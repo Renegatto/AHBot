@@ -1,12 +1,12 @@
 {-# LANGUAGE LambdaCase #-}
 module ArtHistory.Domain where
-import           Data.Bifunctor (first)
-import           ArtHistory.Types
-import           Control.Monad ((<=<),liftM)
+import           Control.Monad ((<=<))
 import           Data.Maybe (maybeToList,listToMaybe,isJust,isNothing,mapMaybe)
-import           Data.List(find,break)
-hole = 3 :: Int
-(...) = (.) . (.)
+import           Data.List(find)
+import           Tools.Combinators ((...))
+
+import           ArtHistory.Types
+
 newQuizSeries :: QuizConfig -> [Event]
 newQuizSeries cfg =
     [NewQuizSeriesStarted cfg]

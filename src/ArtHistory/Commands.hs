@@ -1,16 +1,12 @@
 module ArtHistory.Commands where
-import ArtHistory.Types hiding (Result)
-import Types.Common hiding (Error(..))
-import qualified ArtHistory.Domain as Domain
-import Control.Monad(join,liftM2)--(void,mapM_,join,(<=<),mplus)
 
-import ArtHistory.Languages
+import              Control.Monad                   (liftM2)
+import              Tools.Combinators               (jtraverse,(...))
 
-(...) = (.) . (.)
-jtraverse :: (Traversable t, Monad t, Monad f) => (a -> f (t b)) -> t a -> f (t b)
-jtraverse = fmap join ... traverse
-
--- hole = undefined
+import qualified    ArtHistory.Domain   as    Domain
+import              Types.Common        hiding      (Error(..))
+import              ArtHistory.Types    hiding      (Result)
+import              ArtHistory.Languages
 
 type ArtworkSet = (Artwork,[Artwork])
 
@@ -28,8 +24,6 @@ solveQuiz answer = jtraverse pushEvents . fmap (Domain.solveQuiz answer) =<< uns
 
 endQuizSeries :: AppL (Result ())
 endQuizSeries = pushEvents . Domain.endQuizSeries =<< subscriptionEvents
-
-type CommandHandler = AppContext IO Command [Event]
 
 handle :: Command -> AppL (Result ())
 handle event =
