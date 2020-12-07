@@ -5,7 +5,7 @@ import           Types.Common        as Common (Message)
 import           ArtHistory.Types              (Event,Quiz,QuizConfig,Error,Artwork)
 import qualified ArtHistory.Domain   as Domain
 
-import           Control.Monad.Free
+import           Control.Monad.Free            (Free,liftF)
 import           Data.IORef                    (modifyIORef,readIORef)
 
 type AppL a = Free App a
