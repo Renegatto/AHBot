@@ -33,12 +33,14 @@ library
       Parsers
       Constants
       Resources
+      Schemes
       Types.Common
       ArtHistory.Types
       ArtHistory.Events
       ArtHistory.Domain
       ArtHistory.Commands
       ArtHistory.Messages
+      ArtHistory.Languages
   other-modules:
       Paths_OurBot
   hs-source-dirs:
@@ -54,7 +56,9 @@ library
       text             ,
       parsec           ,
       free             ,
-      lens
+      lens             ,
+      aeson            ,
+      unicode-show
   default-language: Haskell2010        
   default-extensions: ScopedTypeVariables
 executable myproj-exe

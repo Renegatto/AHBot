@@ -1,45 +1,82 @@
 module Startup where
 import qualified Bot
-import qualified Types.Common as Common (AppData) 
+import qualified Types.Common as Common (AppData,Sub(..),eventsHub,commandHub,commandHistory) 
 import qualified ArtHistory.Types as AH
 import qualified Constants                     as Const ( bot_prefix
                                                         , chatchannelId
                                                         , guildId
-                                                        , token )
+                                                        , token
+                                                        , bot_id )
 import qualified Parsers
 
 import           Discord
 import           Discord.Internal.Rest
 import qualified Discord.Internal.Rest.Channel as RChann
 
-import           Control.Concurrent.Chan       (getChanContents)
-import           Control.Monad                 (void)
-import           Control.Monad.Reader          (ReaderT (..), mapReaderT)
+import           GHC.Conc (forkIO)
+import           Control.Concurrent.Chan       (readChan,writeChan)
+import           Data.IORef                    (modifyIORef)
+
+import           Control.Monad                 (void,forever)
+import           Control.Monad.Reader          (ReaderT (..), mapReaderT,MonadReader(..),MonadTrans(..))
 import qualified Data.Text                     as T
+import           Data.Either (fromRight)
+import qualified ArtHistory.Events as AH (handleEvent)
+
+type MyApp = Common.AppData (Common.Sub AH.Event) (Common.Sub AH.Command)
 
 startWholeShit :: IO String
-startWholeShit =
-    fmap T.unpack
-    . runDiscord
-    . runningOptions handleStart . handleEvent 
-    =<< Bot.createEnv
+startWholeShit = discordEventHandler =<< Bot.createEnv
+    where
+    ah_commandHandler :: MyApp -> DiscordHandler ()
+    ah_commandHandler app = 
+        let handle = mapReaderT (void . forkIO . forever) $ act
+            act = Bot.artHistoryCommand app =<< lift (readChan $ Common.commandHub app) :: DiscordHandler ()
+        in lift (print "CH stared") >> handle
+
+    {-ah_eventHandler :: MyApp -> DiscordHandler ()
+    ah_eventHandler app = 
+        mapReaderT ((print "EH started" >>) . void . forkIO) $ forever 
+        $ AH.handleEvent =<< lift (readChan $ Common.eventsHub app)-}
+    ah_eventHandler :: MyApp -> DiscordHandler ()
+    ah_eventHandler app = 
+        let handle = mapReaderT (void . forkIO . forever) $ act
+            act = Bot.artHistoryEvent app =<< lift (readChan $ Common.eventsHub app) :: DiscordHandler ()
+        in lift (print "EH stared") >> handle 
+
+    ah_handlers app = ah_commandHandler app >> ah_eventHandler   app       
+    all_handlers app = handleStart >> ah_handlers app
+
+    discordEventHandler app = 
+        fmap T.unpack
+        $ runDiscord
+        $ runningOptions (all_handlers app) (handleEvent app)
 
 handleStart :: ReaderT DiscordHandle IO ()
 handleStart =
     mapReaderT void
     $ restCall
-    $ RChann.CreateMessage Const.chatchannelId (T.pack "i'm started!")
+    $ RChann.CreateMessage Const.chatchannelId (T.pack "i'm started!!!")
 
--- handleEvent :: Common.AppData (Sub AH.Event) (Sub AH.Command) -> Event -> DiscordHandler ()
+handleEvent :: MyApp -> Event -> DiscordHandler ()
 handleEvent appdata event = ReaderT handler
     where
       handler handle =
         case event of
             MessageCreate msg ->
-                Bot.artHistoryCommand handle appdata (Parsers.parseArtHistoryCommand msg)
-                -- Bot.runCommand handle msg
-                --  $ Parsers.parseCommand
-                --  $ messageText msg
+                if userId (messageAuthor msg) /= Const.bot_id then
+                    let parsed  = Parsers.parseAH (T.unpack . messageText $ msg)
+                        sub     = Common.Sub (Bot.message2sub msg)
+                        command x = do
+                            print $ "parsed: " <> show x
+                            writeChan   (Common.commandHub      appdata) (sub x  )
+                            modifyIORef (Common.commandHistory  appdata) (sub x :)
+                    in
+                    either print id (command <$> parsed)
+                    -- Bot.runCommand handle msg
+                    --  $ Parsers.parseCommand
+                    --  $ messageText msg
+                else pure ()
             _ -> pure ()
 
 runningOptions :: DiscordHandler () -> (Event -> DiscordHandler ()) -> RunDiscordOpts

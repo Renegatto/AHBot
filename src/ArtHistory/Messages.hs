@@ -2,25 +2,67 @@
 
 module ArtHistory.Messages where 
 import ArtHistory.Types
+import Types.Common (Message(..),Image(..))
+import Data.List (intersperse)
+import Data.Foldable (fold)
+import Text.Show.Unicode(ushow)
 newtype MessageContent a = MessageContent a
+
+newtype Debug a = Debug a
+instance Show (Debug Message) where
+    show (Debug (Message msg to)) = show msg
+nl = ['\n']
+instance Show (Debug Event) where
+    show (Debug (NewQuizSeriesStarted (QuizConfig vars (Art art) quizes))) = 
+        "NewQuizSeriesStarted " <> fold (intersperse " " [show vars,show art,show quizes]) <> nl
+    show (Debug (QuizSended quiz)) = 
+        "QuizSended" <> nl
+    show (Debug (QuizSolved quiz)) = 
+        "QuizSolved" <> nl
+    show (Debug (QuizSeriesEnded stats)) = 
+        "QuizSeriesEnded" <> nl
+    show (Debug (MessageSent msg)) = 
+        "MessageSent " <> show (Debug msg) <> nl
+    show (Debug (DomainError (Error e))) = 
+        "DomainError " <> e  <> nl
+instance Show (Debug Command) where
+    show (Debug (NewQuizSeries (QuizConfig vars (Art art) quizes))) = 
+        "NewQuizSeries " <> fold (intersperse " " [show vars,show art,show quizes]) <> nl
+    show (Debug NextQuiz) = 
+        "NextQuiz" <> nl
+    show (Debug (SolveQuiz quiz)) = 
+        "SolveQuiz" <> nl
+    show (Debug EndQuizSeries) = 
+        "EndQuizSeries" <> nl
+    show (Debug (SendMessage msg)) = 
+        "SendMessage " <> show (Debug msg) <> nl
+
+instance Show (MessageContent Art) where
+    show (MessageContent (Art artname)) = "The art of " <> ushow artname
 instance Show (MessageContent Variant) where
-    show (MessageContent (Variant n (Artwork author _ name _))) =
-        show n <> ". " <> author <> " " <> name
+    show (MessageContent (Variant n (Artwork author _ name _ art))) =
+        "Variant " <> show n <> " : " <> nl 
+        <> show (MessageContent art) <> nl 
+        <> author <> nl 
+        <> name   <> nl 
 instance Show (MessageContent Answer) where
     show (MessageContent (Answer n )) = show n
 instance Show (MessageContent QuizConfig) where
     show (MessageContent (QuizConfig 
         variants art quizes )) =
 
-        foldMap (<> "\n")
+        foldMap (<> nl)
         ["The art: "            <> show art
         ,"Quiz count is :"      <> show quizes 
         ,"Variants per quiz: "  <> show variants]
-
+instance Show (MessageContent Image) where
+    show (MessageContent (Image url)) = url
 instance Show (MessageContent Event) where
-    show (MessageContent (QuizSended (Quiz _ variants))) =
-        "Variants: "
-        <> foldMap (mappend "\n" . show . MessageContent) variants 
+    show (MessageContent (QuizSended (Quiz (Variant _ artwork) variants))) =
+        "The artwork: " <> show (MessageContent image)
+        <> nl <> "Variants: " <> nl
+        <> foldMap (mappend nl . show . MessageContent) variants 
+        where image = artworkImage artwork
     show (MessageContent (NewQuizSeriesStarted (QuizConfig 
             variants
             art
@@ -41,7 +83,7 @@ instance Show (MessageContent Event) where
         )))  =
         "You just done completing the quiz series:\n" 
         <> show (MessageContent cfg) <> "\n"
-        <> "You succefly finished " <> show passed <>
+        <> "You successfully finished " <> show passed <>
         "quizes,\n"
     show (MessageContent (MessageSent text)) =
         show text

@@ -14,30 +14,26 @@ import Discord (DiscordHandler,restCall)
 import Discord.Internal.Rest.Channel as RChan
 import Discord.Internal.Types (ChannelId)
 
-import Control.Monad.Reader(ReaderT(..))
+import Control.Monad.Reader(ReaderT(..),lift)
 import qualified Data.Text as T
 import Control.Monad (void)
 
 type EventHandler = Event -> DiscordHandler (Sub [Command])
 handleEvent :: Sub Event -> DiscordHandler (Sub [Command])
-handleEvent event' =
-    case subscriptionStored event' of
+handleEvent event = 
+    lift (print "handling event") >> f 
+    where 
+    f = do
+        case subscriptionStored event of
 
-    event@( NewQuizSeriesStarted cfg ) -> 
-        pure $ [sendMessage event, NextQuiz] <$ event'
+            ( NewQuizSeriesStarted cfg ) -> pure $ [sendMessage event,NextQuiz] <$ event
+            ( QuizSended quiz )       -> 
+                lift (print "quiz sended" >> pure ([sendMessage event] <$ event))
+            ( QuizSolved quiz )       -> pure $ [sendMessage event] <$ event
+            ( QuizSeriesEnded stats ) -> pure $ [sendMessage event] <$ event
+            ( DomainError e )         -> pure $ [sendMessage event] <$ event
+            ( MessageSent _ )         -> pure $ [] <$ event
 
-    event@( QuizSended quiz )       -> pure $ [sendMessage event] <$ event'
-
-    event@( QuizSolved quiz )       -> pure $ [sendMessage event] <$ event'
-
-    event@( QuizSeriesEnded stats ) -> pure $ [sendMessage event] <$ event'
-
-    MessageSent (Message text) ->
-        (zero <$) $ restCall
-        $ RChan.CreateMessage 
-            (subscriptionChannel $ subscriptionInfo event')
-            text
-        where zero = [] <$ event' 
 
 
 {-@
@@ -50,8 +46,8 @@ handleEvent event' =
 
 --hole = undefined
 
-sendMessage :: Event -> Command
-sendMessage = SendMessage . Message . T.pack . show . MessageContent
+sendMessage :: Sub Event -> Command
+sendMessage (Sub sub event) = SendMessage . flip Message sub . T.pack . show . MessageContent $ event
 
 {-
 eventAction :: Subscription -> Event -> DiscordHandler ()

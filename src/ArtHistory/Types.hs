@@ -1,4 +1,3 @@
-{-# LANGUAGE TupleSections #-} --InstanceSigs,
 module ArtHistory.Types where
 import Control.Lens
 import qualified Types.Common as Common (Image,Message,AppData(..),Sub(..))
@@ -11,7 +10,8 @@ data Artwork = Artwork
         artworkAuthor  :: String,
         artworkYear    :: String,
         artworkName    :: String,
-        artworkImage   :: Common.Image
+        artworkImage   :: Common.Image,
+        artworkArt     :: Art
     } deriving (Eq,Show)
 data Variant = Variant {variantNumber::Int, variantArtwork::Artwork} deriving (Eq,Show)
 newtype Answer = Answer {answerVariant :: Int} deriving (Eq,Show)
@@ -45,7 +45,7 @@ data Command =
     |NextQuiz
     |SolveQuiz Answer
     |EndQuizSeries
-    |SendMessage Common.Message
+    |SendMessage Common.Message deriving (Eq,Show)
 newtype Error = Error String deriving (Eq,Show)
 
 type Result a = Either Error a

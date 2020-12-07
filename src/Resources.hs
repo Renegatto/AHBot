@@ -1,8 +1,8 @@
 {-# LANGUAGE FlexibleInstances, GADTs, InstanceSigs #-}
 module Resources ( artworks
                  , randomQuizSet
-                 , randomImage
-                 , images
+                 -- , randomImage
+                 -- , images
                  , randomQuizSet'
                  ) where
 import Data.Maybe (fromMaybe)
@@ -18,7 +18,12 @@ import Data.List(sortOn)
 import Data.Monoid
 import Data.Functor.Sum
 
---hole = undefined
+import qualified Constants as Const (artworks_store)
+import Data.Aeson (decodeFileStrict)
+import Schemes
+
+
+hole = 7 :: Int
 
 randomArtworks :: Int -> IOMaybe [Art.Artwork]
 randomArtworks n = Compose $ sequence . randomSample n =<< artworks
@@ -31,16 +36,16 @@ randomQuizSet' :: Int -> IO (Maybe (Art.Artwork,[Art.Artwork]))
 randomQuizSet' n = getCompose $ randomQuizSet n
 
 artworks :: IO [Art.Artwork]
-artworks = hole
+artworks = fromMaybe [] <$> decodeFileStrict Const.artworks_store
 
 -- =============
-
+{-
 randomImage :: IOMaybe Image
 randomImage = randomFrom images
 
 images :: IO [Image]
 images = hole
-
+-}
 -- =============
 
 randomFrom :: IO [a] -> IOMaybe a

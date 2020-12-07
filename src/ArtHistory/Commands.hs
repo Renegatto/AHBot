@@ -38,5 +38,5 @@ handle event =
         NewQuizSeries cfg -> newQuizSeries cfg
         SolveQuiz answer -> solveQuiz answer
         EndQuizSeries -> endQuizSeries
-        SendMessage msg -> pushEvents [MessageSent msg]
+        SendMessage msg -> sendMessage msg >> pushEvents [MessageSent msg]
     

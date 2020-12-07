@@ -1,8 +1,8 @@
 {-# LANGUAGE LambdaCase #-}
 module ArtHistory.Domain where
-import Data.Bifunctor (first)
+import           Data.Bifunctor (first)
 import           ArtHistory.Types
-import Control.Monad ((<=<),liftM)
+import           Control.Monad ((<=<),liftM)
 import           Data.Maybe (maybeToList,listToMaybe,isJust,isNothing,mapMaybe)
 import           Data.List(find,break)
 hole = 3 :: Int
@@ -32,7 +32,7 @@ solveQuiz ans@(Answer answer) quiz@(Quiz right variants)
 unsolvedQuiz :: [Event] -> Either Error Quiz
 unsolvedQuiz events = notEnded after >> solved after >> sended before
     where
-    (after,before) = break (isNothing . _quizSended) events
+    (after,before) = span (isNothing . _quizSended) events
     sended = tryUnpackHead _quizSended (Error "No quizes has been sent")
     notEnded  = notHappened (Error "Quiz series already ended") (isJust . _quizSeriesEnded)
     solved = notHappened (Error "Quiz is already solved")    (isJust . _quizSolved     ) 
@@ -45,10 +45,10 @@ endQuizSeries = (:[]) . either DomainError QuizSeriesEnded . quizStats
 
 quizStats :: [Event] -> Either Error QuizStats
 quizStats events = 
-    started after >> notEnded after 
+    started before >> notEnded after 
     >> (fmap $ calcQuizStats $ results after) (started before)
     where
-    (after,before) = break (isNothing . _newQuizSeriesStarted) events
+    (after,before) = span (isNothing . _newQuizSeriesStarted) events
     results = mapMaybe _quizSolved
     started = tryUnpackHead _newQuizSeriesStarted (Error "No quizes has been started")
     notEnded = notHappened (Error "Quiz series already ended") (isJust . _quizSeriesEnded)
@@ -61,7 +61,7 @@ calcQuizStats results cfg = QuizStats { statsPassed  = length results
 quizConfig :: [Event] -> Either Error QuizConfig
 quizConfig events = notEnded after >> started before
     where
-    (after,before) = break (isNothing . _newQuizSeriesStarted) events
+    (after,before) = span (isNothing . _newQuizSeriesStarted) events
     started = tryUnpackHead _newQuizSeriesStarted (Error "No quizes has been started")
     notEnded = notHappened (Error "Quiz series already ended") (isJust . _quizSeriesEnded)
 
