@@ -52,16 +52,14 @@ onStart =
     $ RChann.CreateMessage Const.chatchannelId (T.pack "i'm started!!!")
 
 handleEvent :: MyApp -> Event -> DiscordHandler ()
-handleEvent appdata event = ReaderT handle
-    where
-    handle _ =
-        case event of
+handleEvent appdata event = 
+    lift $  case event of
             MessageCreate msg ->
                 if   not $ isBotMessage msg 
                 then either print id (command msg <$> parsed msg)
                 else pure ()
             _ -> pure ()
-
+    where
     isBotMessage msg = userId (messageAuthor msg) == Const.bot_id
     parsed msg  = Parsers.parseAH (T.unpack . messageText $ msg)
     sub msg     = Common.Sub      (Bot.message2sub msg)
