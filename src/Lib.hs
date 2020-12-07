@@ -1,6 +1,4 @@
-module Lib
-    (   someFunc, addStuffLoop,
-    ) where
+module Lib where
 import ArtHistory.Types
 import Schemes
 import Types.Common (Image(..))
@@ -10,21 +8,7 @@ import Control.Monad (liftM2,forever)
 import Control.Concurrent.MVar(putMVar,newMVar,readMVar,modifyMVar_,MVar(..))
 
 import Control.Concurrent.Chan (writeChan,newChan,getChanContents)
-
-mapMVar :: (a -> a) -> MVar a -> IO ()
-mapMVar f v = putMVar v . f =<< readMVar v
-
-addStuffLoop :: IO ()
-addStuffLoop = forever $ newMVar [] >>= loop
-    where 
-    loop v = do
-        print "what to write?"
-        x <- getLine
-        mapMVar (x:) v
-        print "written"
-        print "now channel is:"
-        print =<< readMVar v
-        print "done"
+{-
 
 
 
@@ -43,3 +27,4 @@ storeSample = encodeFile artworks_store
 
 someFunc :: IO ()
 someFunc = addStuffLoop
+-}
