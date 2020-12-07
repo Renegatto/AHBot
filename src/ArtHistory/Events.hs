@@ -2,10 +2,8 @@ module ArtHistory.Events where
 import ArtHistory.Messages
 import ArtHistory.Types
 
-import Types.Common (Subscription(..)
-                    ,Message(..)
-                    ,Sub(..)
-                    ,subscriptionStored)
+import Types.Common ( Message(..)
+                    , Sub(..) )
 
 import qualified Data.Text as T
 import Data.Functor (($>))
