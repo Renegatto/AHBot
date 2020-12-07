@@ -1,6 +1,6 @@
-name:                OurBot
+name:                AHBot
 version:             0.1.0.0
-github:              "githubuser/OurBot"
+github:              "githubuser/AHBot"
 license:             BSD3
 author:              "Author name here"
 maintainer:          "example@example.com"
@@ -34,7 +34,7 @@ executables:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - myproj
+    - AHBot
 
 tests:
   myproj-test:
@@ -45,4 +45,4 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - myproj
+    - AHBot
