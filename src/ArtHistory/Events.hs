@@ -7,20 +7,19 @@ import Types.Common (Subscription(..)
                     ,Sub(..)
                     ,subscriptionStored)
 
-import Discord (DiscordHandler)
 import qualified Data.Text as T
+import Data.Functor (($>))
 
-
-handleEvent :: Sub Event -> DiscordHandler (Sub [Command])
-handleEvent event = do
-        case subscriptionStored event of
-
-            ( NewQuizSeriesStarted cfg ) -> pure $ [sendMessage event,NextQuiz] <$ event
-            ( QuizSended quiz )       -> pure $ [sendMessage event] <$ event
-            ( QuizSolved quiz )       -> pure $ [sendMessage event] <$ event
-            ( QuizSeriesEnded stats ) -> pure $ [sendMessage event] <$ event
-            ( DomainError e )         -> pure $ [sendMessage event] <$ event
-            ( MessageSent _ )         -> pure $ [] <$ event
+handleEvent :: Sub Event -> Sub [Command]
+handleEvent sub@(Sub _ event) =
+    sub $>
+    case event of
+    NewQuizSeriesStarted cfg -> [sendMessage sub,NextQuiz]
+    QuizSended quiz          -> [sendMessage sub]
+    QuizSolved quiz          -> [sendMessage sub]
+    QuizSeriesEnded stats    -> [sendMessage sub]
+    DomainError e            -> [sendMessage sub]
+    MessageSent _            -> []
 
 sendMessage :: Sub Event -> Command
 sendMessage (Sub sub event) = SendMessage . flip Message sub . T.pack . show . MessageContent $ event

@@ -28,7 +28,7 @@ createEnv :: IO AHApp
 createEnv = liftM4 AppData (newIORef []) newChan (newIORef []) newChan
 
 artHistoryEvent :: AHApp -> Sub AH.Event -> DiscordHandler ()
-artHistoryEvent appdata event = EH.handleEvent event >>= lift . actions . sequence
+artHistoryEvent appdata =  lift . actions . sequence . EH.handleEvent
   where 
   actions :: [Sub AH.Command] -> IO ()
   actions commands = do
