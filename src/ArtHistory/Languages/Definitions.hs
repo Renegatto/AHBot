@@ -9,19 +9,27 @@ import           Control.Monad.Free            (Free,liftF)
 import           Data.IORef                    (modifyIORef,readIORef)
 
 type AppL a = Free App a
-data App  a = RandApp    (Random       a) 
-            | EventApp   (EventStorage a) 
-            | DiscordApp (DiscordApp   a) deriving Functor
 
-data DiscordApp a = SendMessage Message (Result () -> a) deriving Functor
+data App  a 
+    = RandApp    (Random       a) 
+    | EventApp   (EventStorage a) 
+    | DiscordApp (DiscordApp   a) 
+    deriving Functor
 
-data EventStorage a = SubscriptionEvents ([Event]           -> a)
-                    | UnsolvedQuiz       (Result Quiz       -> a)
-                    | QuizConfig         (Result QuizConfig -> a)
-                    | PushEvents         [Event] (Result () -> a)    
-                    deriving Functor
+data DiscordApp a 
+    = SendMessage Message (Result () -> a) 
+    deriving Functor
 
-data Random a = RandomQuizSet Int (Result (Artwork,[Artwork]) -> a) deriving Functor
+data EventStorage a 
+    = SubscriptionEvents ([Event]           -> a)
+    | UnsolvedQuiz       (Result Quiz       -> a)
+    | QuizConfig         (Result QuizConfig -> a)
+    | PushEvents         [Event] (Result () -> a)    
+    deriving Functor
+
+data Random a 
+    = RandomQuizSet Int (Result (Artwork,[Artwork]) -> a) 
+    deriving Functor
 
 type QuizSet  = (Artwork,[Artwork])
 type Result a = Either Error a

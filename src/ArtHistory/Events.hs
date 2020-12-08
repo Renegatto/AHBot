@@ -1,3 +1,4 @@
+{-# LANGUAGE DataKinds, TypeApplications #-}
 module ArtHistory.Events where
 import ArtHistory.Messages
 import ArtHistory.Types
@@ -20,4 +21,6 @@ handleEvent sub@(Sub _ event) =
     MessageSent _            -> []
 
 sendMessage :: Sub Event -> Command
-sendMessage (Sub sub event) = SendMessage . flip Message sub . T.pack . show . MessageContent $ event
+sendMessage (Sub sub event) = 
+     SendMessage . flip Message sub . T.pack 
+    . show . PShow @ForMessage $ event

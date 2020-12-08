@@ -1,6 +1,6 @@
 module Startup where
 import qualified ArtHistory.Bot as Bot
-import qualified Types.Common as Common (AppData,Sub(..),eventsHub,commandHub,commandHistory) 
+import qualified Types.Common as Common (AppData,Sub(..),_eventsHub,_commandHub,_commandHistory) 
 import qualified ArtHistory.Types as AH
 import qualified Constants                     as Const ( bot_prefix
                                                         , chatchannelId
@@ -35,8 +35,8 @@ startWholeShit :: IO String
 startWholeShit = discordEventHandler =<< Bot.createEnv
     where
     ah_handlers app = 
-        ahHandler      Bot.artHistoryCommand   Common.commandHub   app
-        >> ahHandler   Bot.artHistoryEvent     Common.eventsHub    app
+        ahHandler      Bot.artHistoryCommand   Common._commandHub   app
+        >> ahHandler   Bot.artHistoryEvent     Common._eventsHub    app
 
     all_handlers app = onStart >> ah_handlers app
 
@@ -65,8 +65,8 @@ handleEvent appdata event =
     sub msg     = Common.Sub      (Bot.message2sub msg)
     command msg x = do
         print $ "parsed: " <> show x
-        writeChan   (Common.commandHub      appdata) (sub msg x  )
-        modifyIORef (Common.commandHistory  appdata) (sub msg x :)
+        writeChan   (Common._commandHub      appdata) (sub msg x  )
+        modifyIORef (Common._commandHistory  appdata) (sub msg x :)
 
 
 runningOptions :: DiscordHandler () -> (Event -> DiscordHandler ()) -> RunDiscordOpts

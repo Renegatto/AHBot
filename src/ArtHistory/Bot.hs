@@ -35,8 +35,8 @@ artHistoryEvent appdata =  lift . actions . sequence . EH.handleEvent
   where 
   actions :: [Sub AH.Command] -> IO ()
   actions commands = do
-      writeList2Chan (commandHub appdata)     commands
-      addToIORef     (commandHistory appdata) commands
+      writeList2Chan (_commandHub appdata)     commands
+      addToIORef     (_commandHistory appdata) commands
 
 artHistoryCommand :: AHApp -> Sub AH.Command -> DiscordHandler ()
 artHistoryCommand appdata (Sub sub command) = do

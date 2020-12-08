@@ -1,10 +1,9 @@
-{-# LANGUAGE LambdaCase #-}
 module ArtHistory.Domain where
 import           Control.Monad ((<=<))
 import           Data.Maybe (maybeToList,listToMaybe,isJust,isNothing,mapMaybe)
 import           Data.List(find)
 import           Tools.Combinators ((...))
-
+import           Control.Lens.Combinators (preview)
 import           ArtHistory.Types
 
 newQuizSeries :: QuizConfig -> [Event]
@@ -17,14 +16,14 @@ nextQuiz cfg (art,arts) =
     where
     variants            = zipWith Variant [0..] arts
     try_quiz            = flip Quiz variants <$> try_right_variant
-    try_right_variant   = find ((art ==) . variantArtwork) variants
+    try_right_variant   = find ((art ==) . _variantArtwork) variants
 
 solveQuiz :: Answer -> Quiz -> [Event]
 solveQuiz ans@(Answer answer) quiz@(Quiz right variants)
-    |answer == variantNumber right = 
+    |answer == _variantNumber right = 
         [QuizSolved $ Succesful right quiz]
     |otherwise =
-        case find ((== answer) . variantNumber) variants of
+        case find ((== answer) . _variantNumber) variants of
         Just variant -> [QuizSolved $ Failed (Right variant) quiz]
         Nothing      -> [QuizSolved $ Failed (Left  ans)     quiz]
 
@@ -32,10 +31,10 @@ solveQuiz ans@(Answer answer) quiz@(Quiz right variants)
 unsolvedQuiz :: [Event] -> Either Error Quiz
 unsolvedQuiz events = notEnded after >> solved after >> sended before
     where
-    (after,before) = span (isNothing . _quizSended) events
-    sended = tryUnpackHead _quizSended (Error "No quizes has been sent")
-    notEnded  = notHappened (Error "Quiz series already ended") (isJust . _quizSeriesEnded)
-    solved = notHappened (Error "Quiz is already solved")    (isJust . _quizSolved     ) 
+    (after,before) = span (isNothing . preview _QuizSended) events
+    sended = tryUnpackHead (preview _QuizSended) (Error "No quizes has been sent")
+    notEnded  = notHappened (Error "Quiz series already ended") (isJust . preview _QuizSeriesEnded)
+    solved = notHappened (Error "Quiz is already solved")    (isJust . preview _QuizSolved     ) 
 
     unpack (QuizSended quiz) = Just quiz
     unpack _                 = Nothing
@@ -48,22 +47,22 @@ quizStats events =
     started before >> notEnded after 
     >> (fmap $ calcQuizStats $ results after) (started before)
     where
-    (after,before) = span (isNothing . _newQuizSeriesStarted) events
-    results = mapMaybe _quizSolved
-    started = tryUnpackHead _newQuizSeriesStarted (Error "No quizes has been started")
-    notEnded = notHappened (Error "Quiz series already ended") (isJust . _quizSeriesEnded)
+    (after,before) = span (isNothing . preview _NewQuizSeriesStarted) events
+    results = mapMaybe (preview _QuizSolved)
+    started = tryUnpackHead (preview _NewQuizSeriesStarted) (Error "No quizes has been started")
+    notEnded = notHappened (Error "Quiz series already ended") (isJust . preview _QuizSeriesEnded)
 
 calcQuizStats :: [SolvedQuiz] -> QuizConfig -> QuizStats
-calcQuizStats results cfg = QuizStats { statsPassed  = length results
-                                      , statsConfig  = cfg
-                                      , statsSolveds = results}
+calcQuizStats results cfg = QuizStats { _statsPassed  = length results
+                                      , _statsConfig  = cfg
+                                      , _statsSolveds = results}
 
 quizConfig :: [Event] -> Either Error QuizConfig
 quizConfig events = notEnded after >> started before
     where
-    (after,before) = span (isNothing . _newQuizSeriesStarted) events
-    started = tryUnpackHead _newQuizSeriesStarted (Error "No quizes has been started")
-    notEnded = notHappened (Error "Quiz series already ended") (isJust . _quizSeriesEnded)
+    (after,before) = span (isNothing . preview _NewQuizSeriesStarted) events
+    started = tryUnpackHead (preview _NewQuizSeriesStarted) (Error "No quizes has been started")
+    notEnded = notHappened (Error "Quiz series already ended") (isJust . preview _QuizSeriesEnded)
 
 tryUnpackHead w e = maybe (Left e) Right . (w <=< listToMaybe)
 
@@ -75,7 +74,7 @@ notHappened e = maybe (Right ()) (const $ Left e) ... find
 
 happened :: e -> (a -> Bool) -> [a] -> Either e a
 happened e = maybe (Left e) Right ... find
-
+{-
 _newQuizSeriesStarted :: Event -> Maybe QuizConfig
 _newQuizSeriesStarted = \case NewQuizSeriesStarted x -> Just x; _ -> Nothing
 _quizSeriesEnded :: Event -> Maybe QuizStats
@@ -84,3 +83,4 @@ _quizSolved :: Event -> Maybe SolvedQuiz
 _quizSolved = \case QuizSolved x -> Just x; _ -> Nothing
 _quizSended :: Event -> Maybe Quiz
 _quizSended = \case QuizSended x -> Just x; _ -> Nothing
+-}

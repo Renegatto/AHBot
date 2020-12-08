@@ -1,9 +1,9 @@
-{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE LambdaCase, DataKinds, TypeApplications #-}
 module ArtHistory.Languages.Interpreters (AppL,evalAppL) where
 
 import ArtHistory.Languages.Definitions
 
-import           ArtHistory.Messages                      (Debug(..))
+import           ArtHistory.Messages                      (PolyShow(PShow),ShowFor(ForDebug))
 import           Types.Common                   as Common (AppData(..),Sub(..),Message(..),Subscription(..))
 import           ArtHistory.Types                         (Event(..),QuizConfig,Error(..))
 import qualified ArtHistory.Domain              as Domain
@@ -36,19 +36,19 @@ evalRandom (RandomQuizSet n cont) =
 
 evalDiscordApp :: DiscordApp a -> DiscordHandler a
 evalDiscordApp (SendMessage (Message msg (Subscription sub chann)) cont) = 
-        cont . either (Left . Error . show) (const $ Right ())
-        <$> restCall message
-        where
-        message = RChann.CreateMessage chann msg
+    cont . either (Left . Error . show) (const $ Right ())
+    <$> restCall message
+    where
+    message = RChann.CreateMessage chann msg
 
 evalEventStorage :: AppData (Sub Event) a -> Subscription -> EventStorage b -> IO b
 evalEventStorage app sub (SubscriptionEvents cont) =
     cont <$> (showBefore =<< this_step)
     where 
     this_step =
-        map subscriptionStored 
-        . filter ((== sub) . subscriptionInfo)
-        <$> readIORef (eventsHistory app)
+        map _subscriptionStored 
+        . filter ((== sub) . _subscriptionInfo)
+        <$> readIORef (_eventsHistory app)
 evalEventStorage app sub (UnsolvedQuiz cont) = 
     cont <$> (showBefore =<< this_step)
     where 
@@ -62,10 +62,10 @@ evalEventStorage app sub (QuizConfig cont) =
         evalEventStorage app sub 
         $ SubscriptionEvents Domain.quizConfig    
 evalEventStorage app sub (PushEvents events cont) = do
-    modifyIORef (eventsHistory app) (sub_events ++) 
-    writeList2Chan (eventsHub app)  sub_events
+    modifyIORef (_eventsHistory app) (sub_events ++) 
+    writeList2Chan (_eventsHub app)  sub_events
     print "Events added. Events now:"
-    print . map (Debug . subscriptionStored)  =<< readIORef (eventsHistory app)
+    print . map (PShow @ForDebug . _subscriptionStored)  =<< readIORef (_eventsHistory app)
     pure $ cont $ Right ()
     where sub_events = map (Sub sub) events
 

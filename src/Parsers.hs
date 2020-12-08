@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Parsers where
-import qualified Constants as Const (bot_prefix)
+import qualified Constants as Const (bot_prefix,ah_bot_prefix)
 import           ArtHistory.Types (Command(..),Art(..),QuizConfig(..),Answer(..))
 
 import           Tools.Combinators((...))
@@ -34,7 +34,7 @@ parseAHCommand =
     parse_done = (string "done" $> EndQuizSeries)
     
 parseAH :: String -> Either ParseError Command
-parseAH = parse (spaces >> string "ah." >> parseAHCommand) ""
+parseAH = parse (spaces >> string Const.ah_bot_prefix >> parseAHCommand) ""
 
 
 

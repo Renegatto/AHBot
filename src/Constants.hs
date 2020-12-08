@@ -4,7 +4,8 @@ module Constants
         chatchannelId,
         guildId,
         artworks_store,
-        bot_id
+        bot_id,
+        ah_bot_prefix,
     ) where
 import Data.Text
 import Data.Word(Word64(..))
@@ -12,6 +13,7 @@ import qualified Discord.Internal.Types as Discord
 
 token = pack "Njk1NjIwMzc5ODM3ODU3ODQy.Xoc09g.rwvcq-ufLleozmwp_GWJ2rjsazs"
 bot_prefix = pack "ь"
+ah_bot_prefix = "ah."
 artworks_store = "artworks.json"
 bot_id = Discord.Snowflake 695620379837857842
 
