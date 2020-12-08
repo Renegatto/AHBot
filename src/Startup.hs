@@ -21,8 +21,10 @@ import           Control.Monad                 (void,forever)
 import           Control.Monad.Reader          (ReaderT (..), mapReaderT,MonadReader(..),MonadTrans(..))
 import qualified Data.Text                     as T
 import           Data.Either (fromRight)
+import           Data.Functor ((<&>))
+import           Data.Maybe (fromMaybe)
 import qualified ArtHistory.Events as AH (handleEvent)
-
+import Text.Parsec (ParseError)
 type MyApp = Common.AppData (Common.Sub AH.Event) (Common.Sub AH.Command)
 
 ahHandler :: (p -> a -> ReaderT DiscordHandle IO ()) -> (p -> Chan a) -> p -> DiscordHandler ()
@@ -53,21 +55,31 @@ onStart =
 
 handleEvent :: MyApp -> Event -> DiscordHandler ()
 handleEvent appdata event = 
-    lift $  case event of
-            MessageCreate msg ->
-                if   not $ isBotMessage msg 
-                then either print id (command msg <$> parsed msg)
-                else pure ()
-            _ -> pure ()
+        case event of
+        MessageCreate msg ->
+            let result = (fromBool (not $ isBotMessage msg) msg
+                        >>= parsed)
+                        <&> either (parsingFailed msg) 
+                                   (lift . command msg)
+                            
+            in
+            fromMaybe (pure ()) result
+        _ -> pure ()
     where
-    isBotMessage msg = userId (messageAuthor msg) == Const.bot_id
+    parsingFailed :: Message -> ParseError -> DiscordHandler ()
+    parsingFailed msg failmsg =
+        lift (print failmsg) >> immediateResponse msg (show failmsg)
+    isBotMessage msg =userId (messageAuthor msg) == Const.bot_id
     parsed msg  = Parsers.parseAH (T.unpack . messageText $ msg)
     sub msg     = Common.Sub      (Bot.message2sub msg)
+    command :: Message -> AH.Command -> IO ()
     command msg x = do
         print $ "parsed: " <> show x
         writeChan   (Common._commandHub      appdata) (sub msg x  )
         modifyIORef (Common._commandHistory  appdata) (sub msg x :)
-
+fromBool :: Bool -> a -> Maybe a
+fromBool True = Just
+fromBool False = const Nothing
 
 runningOptions :: DiscordHandler () -> (Event -> DiscordHandler ()) -> RunDiscordOpts
 runningOptions on_start event_handler = RunDiscordOpts
@@ -80,3 +92,12 @@ runningOptions on_start event_handler = RunDiscordOpts
         discordForkThreadForEvents = True
     }
 
+immediateResponse :: Message -> String -> DiscordHandler ()
+immediateResponse msg s =
+    () <$ handler
+    where
+    handler = 
+        restCall 
+        $ RChann.CreateMessage  (messageChannel msg)
+                                (T.pack s)
+                            

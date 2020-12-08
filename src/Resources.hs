@@ -38,7 +38,6 @@ randomQuizSet' n = getCompose $ randomQuizSet n
 artworks :: IO [Art.Artwork]
 artworks = fromMaybe [] <$> decodeFileStrict Const.artworks_store
 
-foo = 55
 -- =============
 {-
 randomImage :: IOMaybe Image
@@ -69,7 +68,6 @@ randomSample :: Int -> [a] -> Maybe (IO [a])
 randomSample n xs
     |length xs < n = Nothing
     |otherwise = Just $ take n <$> shuffle xs
-
 
 type IOMaybe = Compose IO Maybe
 
