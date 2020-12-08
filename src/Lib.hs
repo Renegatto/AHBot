@@ -8,23 +8,22 @@ import Control.Monad (liftM2,forever)
 import Control.Concurrent.MVar(putMVar,newMVar,readMVar,modifyMVar_,MVar(..))
 
 import Control.Concurrent.Chan (writeChan,newChan,getChanContents)
-{-
+
 
 
 
 sampleArtwork :: Artwork
 sampleArtwork = 
-    Artwork { artworkAuthor = "Pablo Micorezzi"
-            , artworkYear   = "1939 - 228"
-            , artworkName   = "Рождение Венеры"
-            , artworkImage  = Image "http://example-image-domain.dom/veneras-birthday.jpeg"
-            , artworkArt    = Art "Средней Азии"}
+    Artwork { _artworkAuthor = "Pablo Micorezzi"
+            , _artworkYear   = "1939 - 228"
+            , _artworkName   = "Рождение Венеры"
+            , _artworkImage  = Image "http://example-image-domain.dom/veneras-birthday.jpeg"
+            , _artworkArt    = Art "Средней Азии"}
 
 storeSample :: IO ()
 storeSample = encodeFile artworks_store 
                 [sampleArtwork
-                ,sampleArtwork {artworkName="Abraham Linkoln"}]
+                ,sampleArtwork {_artworkName="Abraham Linkoln"}]
 
-someFunc :: IO ()
-someFunc = addStuffLoop
--}
+--someFunc :: IO ()
+--someFunc = addStuffLoop

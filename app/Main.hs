@@ -1,7 +1,10 @@
 module Main where
 import qualified Startup as St
 import Lib
+import Resources (artworks)
 main :: IO ()
 main = do
-    print "started"
+    print "starteddd"
+    -- storeSample
+    print =<< artworks
     print =<< St.startWholeShit

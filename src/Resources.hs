@@ -38,6 +38,7 @@ randomQuizSet' n = getCompose $ randomQuizSet n
 artworks :: IO [Art.Artwork]
 artworks = fromMaybe [] <$> decodeFileStrict Const.artworks_store
 
+foo = 55
 -- =============
 {-
 randomImage :: IOMaybe Image
@@ -59,7 +60,7 @@ randomElem [] = Nothing
 randomElem xs = Just $ (xs !!) <$> randomRIO (0,length xs - 1)
 
 shuffleByGen :: RandomGen gen => gen -> [a] -> [a]
-shuffleByGen gen = map snd . sortOn fst . zip [randoms gen :: [Int]]
+shuffleByGen gen = map snd . sortOn fst . zip (randoms gen :: [Int])
 
 shuffle :: [a] -> IO [a]
 shuffle = liftM2 shuffleByGen getStdGen . pure

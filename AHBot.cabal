@@ -42,7 +42,6 @@ library
       ArtHistory.Commands
       ArtHistory.Messages
       ArtHistory.Bot
-      ArtHistory.Errors
       ArtHistory.Languages.Interpreters
       ArtHistory.Languages.Definitions
       ArtHistory.Languages.Language

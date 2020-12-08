@@ -32,7 +32,7 @@ instance Show (Debug Event) where
     show (PShow (QuizSeriesEnded _)) = 
         "QuizSeriesEnded" <> nl
     show (PShow (MessageSent msg)) = 
-        "MessageSent " <> show (PShow msg :: Debug Message) <> nl
+        "MessageSent " <> show (PShow @ForDebug msg ) <> nl
     show (PShow (DomainError (Error e))) = 
         "DomainError " <> e <> nl
 instance Show (Debug Command) where
@@ -45,7 +45,7 @@ instance Show (Debug Command) where
     show (PShow EndQuizSeries) = 
         "EndQuizSeries" <> nl
     show (PShow (SendMessage msg)) = 
-        "SendMessage " <> show (PShow msg :: Debug Message) <> nl
+        "SendMessage " <> show (PShow @ForDebug msg) <> nl
 
 type MessageCont a = PolyShow ForMessage a
 
