@@ -47,7 +47,7 @@ parseAHCommand =
     parse_new = command "new" >> do
         variant <- spaces >> (nat' <?> "variants count")
         art     <- spaces >> expectedText' "art name"
-        quizes  <- spaces >> nat' <?> "quizes count"
+        quizes  <- spaces >> (nat' <?> "quizes count")
         pure $ mkNew variant (Art art) quizes
     parse_next = command "next" $> NextQuiz
     parse_try  = command "try"  >> SolveQuiz . Answer <$> (nat' <?> "variant number")
