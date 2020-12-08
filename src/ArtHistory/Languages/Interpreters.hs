@@ -1,4 +1,4 @@
-{-# LANGUAGE LambdaCase, DataKinds, TypeApplications #-}
+{-# LANGUAGE LambdaCase, DataKinds #-} -- , TypeApplications #-}
 module ArtHistory.Languages.Interpreters (AppL,evalAppL) where
 
 import ArtHistory.Languages.Definitions
@@ -7,6 +7,7 @@ import           ArtHistory.Messages                      (PolyShow(PShow),ShowF
 import           Types.Common                   as Common (AppData(..),Sub(..),Message(..),Subscription(..))
 import           ArtHistory.Types                         (Event(..),QuizConfig,Error(..))
 import qualified ArtHistory.Domain              as Domain
+import           Tools.Combinators                        (addToIORef)
 
 import           Resources                                (randomQuizSet')
 
@@ -62,10 +63,10 @@ evalEventStorage app sub (QuizConfig cont) =
         evalEventStorage app sub 
         $ SubscriptionEvents Domain.quizConfig    
 evalEventStorage app sub (PushEvents events cont) = do
-    modifyIORef (_eventsHistory app) (sub_events ++) 
+    addToIORef (_eventsHistory app)  sub_events 
     writeList2Chan (_eventsHub app)  sub_events
-    print "Events added. Events now:"
-    print . map (PShow @ForDebug . _subscriptionStored)  =<< readIORef (_eventsHistory app)
+    --print "Events added. Events now:"
+    --print . map (PShow @ForDebug . _subscriptionStored)  =<< readIORef (_eventsHistory app)
     pure $ cont $ Right ()
     where sub_events = map (Sub sub) events
 
