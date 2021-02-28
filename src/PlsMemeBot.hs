@@ -3,22 +3,21 @@ module PlsMemeBot where
 import qualified Constants as Const (bot_prefix)
 
 import qualified Data.Text                     as T
-import           Discord
-import           Discord.Internal.Rest
+import           Discord               ( restCall, DiscordHandle )
+import           Discord.Internal.Rest ( Message(messageChannel) )
 import qualified Discord.Internal.Rest.Channel as RChann
 import           Control.Monad.Reader (runReaderT)
-import Control.Applicative
-import Text.Parsec (try,eof,manyTill,Parsec(..),parse,optionMaybe,ParseError,unexpected)
-import Text.Parsec.Char (spaces,anyChar,space,string)
-import Control.Monad(liftM3,void)
-import Data.Functor (($>))
-import ArtHistory.Types (Command(..),Art(..),QuizConfig(..),Answer(..))
-import Data.Either (fromRight)
-import Text.Read(readMaybe)
+import           Control.Applicative ( Alternative((<|>)) )
+import           Text.Parsec        (try,eof,manyTill,Parsec(..),parse,optionMaybe,ParseError,unexpected)
+import           Text.Parsec.Char   (spaces,anyChar,space,string)
+import           Control.Monad      (liftM3,void)
+import           Data.Functor       (($>))
+import           ArtHistory.Types   (Command(..),Art(..),QuizConfig(..),Answer(..))
+import           Data.Either        (fromRight)
+import           Text.Read          (readMaybe)
 
-data BotCommand =
-  PlsMeme
-  |DoNothing
+data BotCommand = PlsMeme | DoNothing
+
 runCommand :: DiscordHandle -> Message -> BotCommand -> IO ()
 runCommand _ _        DoNothing = pure ()
 runCommand handle msg PlsMeme = do

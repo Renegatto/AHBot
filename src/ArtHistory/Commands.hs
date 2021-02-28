@@ -7,8 +7,8 @@ import qualified    ArtHistory.Domain   as    Domain
 import              Types.Common        hiding      (Error(..))
 import              ArtHistory.Types    hiding      (Result)
 import              ArtHistory.Languages.Language
-
-type ArtworkSet = (Artwork,[Artwork])
+import Data.List.NonEmpty (NonEmpty)
+type ArtworkSet = (Artwork,NonEmpty Artwork)
 
 nextQuiz :: AppL (Result ())
 nextQuiz = do

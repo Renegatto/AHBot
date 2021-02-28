@@ -20,15 +20,19 @@ eof' = '_' <$ eof
 sarg = spaces *> manyTill anyChar (eof' <|> space)
 endOfArg = eof' <|> space-}
 
+stringLit :: [Char]
 stringLit = ['"',head "'"]
+floatSeparators :: [Char]
 floatSeparators = [',','.']
 
 not' p = try $ optionMaybe p >>= maybe (pure ()) (const $ unexpected "")
 
+nat' :: Parsec String u Int
 nat'   = read <$> manyTill digit (not' digit) :: Parsec String u Int
 float' :: Parsec String u Float
 float' = read <$> manyTill flo (not' flo)
     where flo = digit <|> oneOf floatSeparators
+text' :: Parsec String u String
 text'  = oneOf stringLit >> manyTill (noneOf stringLit) (oneOf stringLit) :: Parsec String u String
 
 expectedText' :: String -> Parsec String u String

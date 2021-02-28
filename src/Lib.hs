@@ -1,8 +1,8 @@
 module Lib where
-import ArtHistory.Types
-import Schemes
+import ArtHistory.Types ( Artwork(..), Art(Art) )
+import Schemes ()
 import Types.Common (Image(..))
-import Data.Aeson
+import Data.Aeson ( encodeFile )
 import Constants (artworks_store)
 import Control.Monad (liftM2,forever)
 import Control.Concurrent.MVar(putMVar,newMVar,readMVar,modifyMVar_,MVar(..))

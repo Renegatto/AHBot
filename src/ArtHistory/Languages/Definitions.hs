@@ -7,7 +7,7 @@ import qualified ArtHistory.Domain   as Domain
 
 import           Control.Monad.Free            (Free,liftF)
 import           Data.IORef                    (modifyIORef,readIORef)
-
+import           Data.List.NonEmpty (NonEmpty)
 type AppL a = Free App a
 
 data App  a 
@@ -28,7 +28,7 @@ data EventStorage a
     deriving Functor
 
 data Random a 
-    = RandomQuizSet Int (Result (Artwork,[Artwork]) -> a) 
+    = RandomQuizSet Int (Result (Artwork,NonEmpty Artwork) -> a) 
     deriving Functor
 
 type QuizSet  = (Artwork,[Artwork])
@@ -41,7 +41,7 @@ pushEvents          :: [Event] -> AppL (Result ())
 
 sendMessage         :: Message -> AppL (Result ())
 
-randomQuizSet       :: Int -> AppL (Result (Artwork,[Artwork]))
+randomQuizSet       :: Int -> AppL (Result (Artwork,NonEmpty Artwork))
 
 subscriptionEvents  = liftF $ EventApp $ SubscriptionEvents id
 unsolvedQuiz        = liftF $ EventApp $ UnsolvedQuiz       id

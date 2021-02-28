@@ -8,7 +8,8 @@ import Types.Common (Message(..),Image(..),msg)
 import Data.List (intersperse)
 import Data.Foldable (fold)
 import Text.Show.Unicode(ushow)
-import Optics ( (^.), makeLenses, (%) )
+import Optics ( (^.), makeLenses, (%),view )
+import Control.Arrow ((>>>))
 
 data ShowFor = ForDebug | ForMessage
 newtype PolyShow (a :: ShowFor) b = PShow {_pshow :: b}
@@ -63,7 +64,7 @@ instance Show (MessageCont Variant) where
         <> author <> nl 
         <> name   <> nl 
 instance Show (MessageCont Answer) where
-    show = show.(^. pshow % answerVariant)
+    show = view (pshow % answerVariant) >>> show
 instance Show (MessageCont QuizConfig) where
     show (PShow (QuizConfig 
         variants art quizes )) =
@@ -104,7 +105,7 @@ instance Show (MessageCont Event) where
         "You just done completing the quiz series:\n" 
         <> showm cfg <> "\n"
         <> "You successfully finished " <> show passed <>
-        "quizes," <> nl
+        " quizes," <> nl
         <> foldMap showm  answers
     show (PShow (MessageSent text)) =
         show text

@@ -2,6 +2,7 @@
 module ArtHistory.Types where
 import Optics
 import qualified Types.Common as Common (Image,Message)
+import Data.List.NonEmpty (NonEmpty)
 
 newtype Art = Art String deriving (Eq,Show)
 newtype Error
@@ -26,7 +27,7 @@ newtype Answer = Answer
     } deriving (Eq,Show)
 makeLenses ''Answer
 data Quiz
-    = Quiz Variant [Variant] 
+    = Quiz Variant (NonEmpty Variant)
     deriving (Eq,Show)
 data QuizConfig = QuizConfig 
     { _cfgTotalVariants  :: Int

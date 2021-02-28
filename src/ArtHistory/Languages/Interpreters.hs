@@ -9,7 +9,7 @@ import           ArtHistory.Types                         (Event(..),QuizConfig,
 import qualified ArtHistory.Domain              as Domain
 import           Tools.Combinators                        (addToIORef)
 
-import           Resources                                (randomQuizSet')
+import           Resources                      as Res    (randomQuizSet,artworks)
 
 import           Control.Monad.Free                       (foldFree)
 import           Control.Monad.Reader                     (lift)
@@ -19,6 +19,7 @@ import           Data.IORef                               (modifyIORef,readIORef
 import           Discord                                  (DiscordHandler,restCall)
 import qualified Discord.Internal.Rest.Channel  as RChann (ChannelRequest(..))
 import qualified Discord.Internal.Types.Channel as TChann (Message(..))
+import Optics (over,_Left)
 
 evalAppL :: AppData (Sub Event) a -> Subscription -> AppL b -> DiscordHandler b
 evalAppL app sub = foldFree $ evalApp app sub
@@ -31,8 +32,7 @@ evalApp app sub = \case
 
 evalRandom :: Random a -> IO a
 evalRandom (RandomQuizSet n cont) = 
-    cont . maybe (Left error) Right 
-    <$> randomQuizSet' n
+    cont . over _Left (Error . show) <$> Res.randomQuizSet n
     where error = Error "Error: cant generate random quiz set"
 
 evalDiscordApp :: DiscordApp a -> DiscordHandler a
