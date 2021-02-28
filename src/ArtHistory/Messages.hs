@@ -8,7 +8,7 @@ import Types.Common (Message(..),Image(..),msg)
 import Data.List (intersperse)
 import Data.Foldable (fold)
 import Text.Show.Unicode(ushow)
-import Control.Lens
+import Optics ( (^.), makeLenses, (%) )
 
 data ShowFor = ForDebug | ForMessage
 newtype PolyShow (a :: ShowFor) b = PShow {_pshow :: b}
@@ -19,7 +19,7 @@ nl = ['\n']
 --newtype MessageContent a = MessageContent a deriving (Functor,Foldable,Traversable)
 
 instance Show (PolyShow ForDebug Message) where
-    show = show . (^. pshow . msg)
+    show = show . (^. pshow % msg)
 type Debug a = PolyShow ForDebug a
 
 instance Show (Debug Event) where
@@ -63,7 +63,7 @@ instance Show (MessageCont Variant) where
         <> author <> nl 
         <> name   <> nl 
 instance Show (MessageCont Answer) where
-    show = show.(^.pshow.answerVariant)
+    show = show.(^. pshow % answerVariant)
 instance Show (MessageCont QuizConfig) where
     show (PShow (QuizConfig 
         variants art quizes )) =

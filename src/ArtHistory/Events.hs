@@ -1,7 +1,8 @@
 {-# LANGUAGE DataKinds, TypeApplications #-}
 module ArtHistory.Events where
-import ArtHistory.Messages
+import ArtHistory.Messages ( PolyShow(PShow), ShowFor(ForMessage) )
 import ArtHistory.Types
+    ( Event(..), Command(SendMessage, NextQuiz) )
 
 import Types.Common ( Message(..)
                     , Sub(..) )

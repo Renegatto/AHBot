@@ -1,6 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 module ArtHistory.Types where
-import Control.Lens
+import Optics
 import qualified Types.Common as Common (Image,Message)
 
 newtype Art = Art String deriving (Eq,Show)

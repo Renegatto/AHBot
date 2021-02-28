@@ -14,7 +14,7 @@ import           Resources                                (randomQuizSet')
 import           Control.Monad.Free                       (foldFree)
 import           Control.Monad.Reader                     (lift)
 import           Control.Concurrent.Chan                  (writeList2Chan)
-import           Data.IORef(modifyIORef,readIORef)
+import           Data.IORef                               (modifyIORef,readIORef)
 
 import           Discord                                  (DiscordHandler,restCall)
 import qualified Discord.Internal.Rest.Channel  as RChann (ChannelRequest(..))

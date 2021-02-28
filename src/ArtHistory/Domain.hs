@@ -3,7 +3,7 @@ import           Control.Monad ((<=<))
 import           Data.Maybe (maybeToList,listToMaybe,isJust,isNothing,mapMaybe)
 import           Data.List(find)
 import           Tools.Combinators ((...))
-import           Control.Lens.Combinators (preview)
+import           Optics (preview)
 import           ArtHistory.Types
 
 newQuizSeries :: QuizConfig -> [Event]

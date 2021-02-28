@@ -4,7 +4,7 @@ import qualified Discord.Internal.Types  as Discord(ChannelId,Snowflake)
 import qualified Data.Text               as T
 import qualified Control.Concurrent.Chan as Chann(Chan)
 import qualified Data.IORef              as IORef (IORef)
-import           Control.Lens
+import           Optics
 
 newtype Image       = Image      String             deriving (Eq,Show)
 newtype Subscriber  = Subscriber Discord.Snowflake  deriving (Eq,Show)
