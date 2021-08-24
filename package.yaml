@@ -21,10 +21,23 @@ description:         Please see the README on GitHub at <https://github.com/gith
 
 dependencies:
 - base >= 4.7 && < 5
+- emoji == 0.1.0.2 
+- discord-haskell  
+- random           
+- mtl              
+- containers       
+- text             
+- parsec           
+- free             
+- optics           
+- aeson            
+- unicode-show
 
 library:
   source-dirs: src
-
+  ghc-options: -Wincomplete-patterns
+  default-extensions: ScopedTypeVariables
+  
 executables:
   myproj-exe:
     main:                Main.hs

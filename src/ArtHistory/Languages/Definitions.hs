@@ -1,4 +1,6 @@
 {-# LANGUAGE GADTs, DeriveFunctor #-}
+{-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE DerivingVia #-}
 module ArtHistory.Languages.Definitions where
 import           ArtHistory.Messages
 import           Types.Common        as Common (Message)
@@ -6,49 +8,36 @@ import           ArtHistory.Types              (Event,Quiz,QuizConfig,Error,Artw
 import qualified ArtHistory.Domain   as Domain
 
 import           Control.Monad.Free            (Free,liftF)
+import           Control.Monad.State.Lazy (MonadState, StateT(..), MonadIO)
 import           Data.IORef                    (modifyIORef,readIORef)
 import           Data.List.NonEmpty (NonEmpty)
-type AppL a = Free App a
+import Control.Monad.Identity (Identity)
+import Control.Monad.Reader.Class (MonadReader)
+import Control.Monad.Writer.Strict (MonadTrans)
+import Discord (DiscordHandler)
 
-data App  a 
-    = RandApp    (Random       a) 
-    | EventApp   (EventStorage a) 
-    | DiscordApp (DiscordApp   a) 
-    deriving Functor
-
-data DiscordApp a 
-    = SendMessage Message (Result () -> a) 
-    deriving Functor
-
-data EventStorage a 
-    = SubscriptionEvents ([Event]           -> a)
-    | UnsolvedQuiz       (Result Quiz       -> a)
-    | QuizConfig         (Result QuizConfig -> a)
-    | PushEvents         [Event] (Result () -> a)    
-    deriving Functor
-
-data Random a 
-    = RandomQuizSet Int (Result (Artwork,NonEmpty Artwork) -> a) 
-    deriving Functor
+--type AppL a = App () Identity a
 
 type QuizSet  = (Artwork,[Artwork])
 type Result a = Either Error a
 
-subscriptionEvents  :: AppL [Event]
-unsolvedQuiz        :: AppL (Result Quiz)
-quizConfig          :: AppL (Result QuizConfig)
-pushEvents          :: [Event] -> AppL (Result ())
+class Monad m => AppM m where
+    subscriptionEvents  :: m [Event]
+    unsolvedQuiz        :: m (Result Quiz)
+    quizConfig          :: m (Result QuizConfig)
+    pushEvents          :: [Event] -> m (Result ())
 
-sendMessage         :: Message -> AppL (Result ())
+    sendMessage         :: Message -> m (Result ())
 
-randomQuizSet       :: Int -> AppL (Result (Artwork,NonEmpty Artwork))
+    randomQuizSet       :: Int -> m (Result (Artwork,NonEmpty Artwork))
 
-subscriptionEvents  = liftF $ EventApp $ SubscriptionEvents id
-unsolvedQuiz        = liftF $ EventApp $ UnsolvedQuiz       id
-quizConfig          = liftF $ EventApp $ QuizConfig         id
-pushEvents events   = liftF $ EventApp $ PushEvents events  id
+newtype App s m a = App {runApp :: s -> m (a,s)}
+    deriving stock Functor
+    deriving 
+        (Applicative
+        , Monad
+        , MonadState s
+        , MonadReader s) via (StateT s m)
+    deriving MonadTrans via (StateT s)
 
-sendMessage msg     = liftF $ DiscordApp $ SendMessage msg  id
-
-randomQuizSet n     = liftF $ RandApp $ RandomQuizSet   n   id
 

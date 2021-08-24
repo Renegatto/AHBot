@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleInstances, GADTs, InstanceSigs, TemplateHaskell #-}
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 module Resources ( artworks
                  --, randomQuizSet
                  -- , randomImage
@@ -36,7 +37,7 @@ data QuizSetGeneratingError
     | ArtworksStorageIsEmpty deriving (Show,Eq)
 
 res :: IO [Either QuizSetGeneratingError (Artwork, NE Artwork)]
-res = traverse (const $ randomQuizSet 3) [0..40] :: IO [Either QuizSetGeneratingError (Art.Artwork, NE Art.Artwork)]
+res = traverse (const $ randomQuizSet 3) [0..40]
 
 qeee = fmap (^? _Right % _1 % artworkYear) <$> res
 bar = traverse print <$> res
@@ -101,5 +102,6 @@ instance Random (NE a -> a) where
 instance Random (NE a -> (a,NE a)) where
   random gen = (elem . view shuffled . shuffd &&& id,gen2)
     where 
-    ( shuffd :: NE a -> Shuffled (NE a),
-     (elem :: NE a -> a, gen2)        ) = second random $ random gen
+    shuffd :: NE a -> Shuffled (NE a)
+    elem   :: NE a -> a
+    (shuffd,(elem,gen2)) = second random $ random gen

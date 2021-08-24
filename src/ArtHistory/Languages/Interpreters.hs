@@ -1,73 +1,93 @@
-{-# LANGUAGE LambdaCase, DataKinds #-} -- , TypeApplications #-}
-module ArtHistory.Languages.Interpreters (AppL,evalAppL) where
+-- {-# OPTIONS_GHC -Weverything #-} -- , TypeApplications #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE InstanceSigs #-}
+
+module ArtHistory.Languages.Interpreters
+  ( AppL
+  , evalAppL
+  ) where
 
 import ArtHistory.Languages.Definitions
 
-import           ArtHistory.Messages                      (PolyShow(PShow),ShowFor(ForDebug))
-import           Types.Common                   as Common (AppData(..),Sub(..),Message(..),Subscription(..))
-import           ArtHistory.Types                         (Event(..),QuizConfig,Error(..))
-import qualified ArtHistory.Domain              as Domain
-import           Tools.Combinators                        (addToIORef)
+import qualified ArtHistory.Domain as Domain
+import ArtHistory.Messages (PolyShow(PShow), ShowFor(ForDebug))
+import ArtHistory.Types (Artwork, Error(..), Event(..), Quiz, QuizConfig)
+import Tools.Combinators (addToIORef)
+import Types.Common as Common
+  ( AppData(..)
+  , Message(..)
+  , Sub(..)
+  , Subscription(..)
+  )
 
-import           Resources                      as Res    (randomQuizSet,artworks)
+import Resources as Res (artworks, randomQuizSet)
 
-import           Control.Monad.Free                       (foldFree)
-import           Control.Monad.Reader                     (lift)
-import           Control.Concurrent.Chan                  (writeList2Chan)
-import           Data.IORef                               (modifyIORef,readIORef)
+import Control.Concurrent.Chan (writeList2Chan)
+import Control.Monad.Free (foldFree)
+import Control.Monad.Reader (lift)
+import Data.IORef (modifyIORef, readIORef)
 
-import           Discord                                  (DiscordHandler,restCall)
-import qualified Discord.Internal.Rest.Channel  as RChann (ChannelRequest(..))
+import Control.Applicative (Applicative(liftA2))
+import Control.Monad.Identity (Identity)
+import Control.Monad.State (MonadTrans, get, gets, MonadIO (liftIO))
+import Data.Coerce (coerce)
+import Data.List.NonEmpty (NonEmpty)
+import Discord (DiscordHandler, restCall)
+import qualified Discord.Internal.Rest.Channel as RChann (ChannelRequest(..))
 import qualified Discord.Internal.Types.Channel as TChann (Message(..))
-import Optics (over,_Left)
+import Optics (_Left, over)
 
-evalAppL :: AppData (Sub Event) a -> Subscription -> AppL b -> DiscordHandler b
-evalAppL app sub = foldFree $ evalApp app sub
+evalAppL ::
+     AppData (Sub Event) a -> Subscription -> AppL a b -> DiscordHandler b
+evalAppL app sub appl = fst <$> runApp appl (app, sub)
 
-evalApp :: AppData (Sub Event) a -> Subscription -> App b -> DiscordHandler b
-evalApp app sub = \case
-    RandApp     program -> lift $ evalRandom program
-    EventApp    program -> lift $ evalEventStorage app sub program
-    DiscordApp  program -> evalDiscordApp program
+-- newtype App s m a = App (s -> m (a,s))
+type AppInfo a = (AppData (Sub Event) a, Subscription)
 
-evalRandom :: Random a -> IO a
-evalRandom (RandomQuizSet n cont) = 
-    cont . over _Left (Error . show) <$> Res.randomQuizSet n
-    where error = Error "Error: cant generate random quiz set"
+type AppL b = App (AppData (Sub Event) b, Subscription) DiscordHandler
 
-evalDiscordApp :: DiscordApp a -> DiscordHandler a
-evalDiscordApp (SendMessage (Message msg (Subscription sub chann)) cont) = 
-    cont . either (Left . Error . show) (const $ Right ())
-    <$> restCall message
+getSubEventsHistory :: AppL b [Sub Event]
+getSubEventsHistory = fromIO . readIORef =<< gets (_eventsHistory . fst)
+
+fromIO :: IO a -> AppL b a
+fromIO = lift . lift
+
+instance AppM (AppL b) where
+  subscriptionEvents :: AppL b [Event]
+  subscriptionEvents =
+    showBefore =<< liftA2 sub_events (gets snd) getSubEventsHistory
     where
-    message = RChann.CreateMessage chann msg
+      sub_events :: Subscription -> [Sub Event] -> [Event]
+      sub_events sub =
+        map _subscriptionStored . filter ((== sub) . _subscriptionInfo)
 
-evalEventStorage :: AppData (Sub Event) a -> Subscription -> EventStorage b -> IO b
-evalEventStorage app sub (SubscriptionEvents cont) =
-    cont <$> (showBefore =<< this_step)
-    where 
-    this_step =
-        map _subscriptionStored 
-        . filter ((== sub) . _subscriptionInfo)
-        <$> readIORef (_eventsHistory app)
-evalEventStorage app sub (UnsolvedQuiz cont) = 
-    cont <$> (showBefore =<< this_step)
-    where 
-    this_step = 
-        evalEventStorage app sub 
-        $ SubscriptionEvents Domain.unsolvedQuiz
-evalEventStorage app sub (QuizConfig cont) =
-    cont <$> (showBefore =<< this_step)
+  unsolvedQuiz :: AppL b (Result Quiz)
+  unsolvedQuiz = showBefore . Domain.unsolvedQuiz =<< subscriptionEvents
+
+  quizConfig :: AppL b (Result QuizConfig)
+  quizConfig = showBefore . Domain.quizConfig =<< subscriptionEvents
+
+  pushEvents :: [Event] -> AppL b (Result ())
+  pushEvents events = do
+      (app, sub) <- get
+      let sub_events = map (Sub sub) events
+      fromIO $ addToIORef (_eventsHistory app) sub_events
+      fromIO $ writeList2Chan (_eventsHub app) sub_events
+        --print "Events added. Events now:"
+        --print . map (PShow @ForDebug . _subscriptionStored) =<< readIORef (_eventsHistory app)
+      pure $ Right ()
+
+  sendMessage :: Message -> AppL b (Result ())
+  sendMessage (Message msg (Subscription _ chann)) =
+    either (Left . Error . show) (const $ Right ()) 
+    <$> lift (restCall message)
     where
-    this_step = 
-        evalEventStorage app sub 
-        $ SubscriptionEvents Domain.quizConfig    
-evalEventStorage app sub (PushEvents events cont) = do
-    addToIORef (_eventsHistory app)  sub_events 
-    writeList2Chan (_eventsHub app)  sub_events
-    --print "Events added. Events now:"
-    --print . map (PShow @ForDebug . _subscriptionStored)  =<< readIORef (_eventsHistory app)
-    pure $ cont $ Right ()
-    where sub_events = map (Sub sub) events
+      message = RChann.CreateMessage chann msg
 
-showBefore x = print x >> pure x
+  randomQuizSet :: Int -> AppL b (Result (Artwork, NonEmpty Artwork))
+  randomQuizSet n = over _Left (Error . show) <$> fromIO (Res.randomQuizSet n)
+    where
+      error = Error "Error: cant generate random quiz set"
+
+showBefore :: Show a => a -> AppL b a
+showBefore x = fromIO $ print x >> pure x
